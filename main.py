@@ -25,7 +25,7 @@ except ImportError:
     import ltr559
 
 config = {
-    'hostname': '192.168.1788.21',
+    'hostname': '192.168.178.21',
     'port': 27017,
     "database": "enviro",
     "collection": "enviro",
