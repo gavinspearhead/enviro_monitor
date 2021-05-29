@@ -291,7 +291,7 @@ if __name__ == '__main__':
             "Using compensating algorithm (factor={}) to account for heat leakage from Raspberry Pi board".format(
                 args.factor))
 
-    logging.info("Listening on http://{}:{}".format(args.bind, args.port))
+    # logging.info("Listening on http://{}:{}".format(args.bind, args.port))
 
     while True:
         get_temperature(args.factor)
