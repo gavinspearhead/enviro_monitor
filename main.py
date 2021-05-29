@@ -268,7 +268,7 @@ if __name__ == '__main__':
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
     parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=1.0,
                         help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
-    parser.add_argument('-t', '--timeout', metaver="TIMOUT", type=int, default=1, help='timeout betweeen readings')
+    parser.add_argument('-t', '--timeout', metavar="TIMOUT", type=int, default=1, help='timeout betweeen readings')
     args = parser.parse_args()
 
     # Start up the server to expose the metrics.
