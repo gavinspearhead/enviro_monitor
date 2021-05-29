@@ -278,6 +278,10 @@ if __name__ == '__main__':
     if args.debug:
         DEBUG = True
 
+    if args.timeout:
+        logging.info("Logging every {} seconds".format(args.timeout))
+
+
     if args.factor:
         logging.info(
             "Using compensating algorithm (factor={}) to account for heat leakage from Raspberry Pi board".format(
