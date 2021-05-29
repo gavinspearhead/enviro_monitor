@@ -304,7 +304,7 @@ if __name__ == '__main__':
             logging.info('Sensor data: {}'.format(collect_all_data()))
         mc.insert_one(collect_all_data())
         now2 = datetime.datetime.now(pytz.UTC) - now1
-        remaining_time = (now2.seconds + (now2.microseconds / 1000000)) - args.timeout
+        remaining_time = args.timeout - (now2.seconds + (now2.microseconds / 1000000))
 
         if remaining_time > 0:
             print("sleeping :", remaining_time)
