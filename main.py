@@ -24,6 +24,16 @@ try:
 except ImportError:
     import ltr559
 
+config = {
+    'hostname': '192.168.1788.21',
+    'post': 27017,
+    "database": "enviro",
+    "collection": "enviro",
+    "username": "enviro",
+    "password": "S2ytTULCBmEQYZrxF0sC",
+    "auth_db": "enviro"
+}
+
 
 class MongoConnector:
     def __init__(self, config):
@@ -41,7 +51,6 @@ class MongoConnector:
 
     def get_collection(self):
         return self._collection
-
 
 
 logging.basicConfig(
@@ -253,7 +262,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
-    parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=1.0, help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
+    parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=1.0,
+                        help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
 
     args = parser.parse_args()
 
@@ -271,6 +281,8 @@ if __name__ == '__main__':
 
     # logging.info("Listening on http://{}:{}".format(args.bind, args.port))
 
+    mc = MongoConnector(config).get_collection()
+
     while True:
         get_temperature(args.factor)
         get_pressure()
@@ -281,3 +293,4 @@ if __name__ == '__main__':
         get_particulates()
         if DEBUG:
             logging.info('Sensor data: {}'.format(collect_all_data()))
+        mc.insertOne(collect_all_data())
