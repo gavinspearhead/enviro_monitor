@@ -303,5 +303,5 @@ if __name__ == '__main__':
         remaining_time= (now2.seconds + (now2.microseconds / 1000000) ) - args.timeout
 
         if remaining_time > 0:
-            print("sleepnig :", remaining_time.seconds)
+            print("sleeping :", remaining_time.seconds)
             time.sleep(remaining_time.seconds)
