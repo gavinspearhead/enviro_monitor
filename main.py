@@ -243,6 +243,7 @@ def collect_all_data():
     sensor_data['pm1'] = pm1.avg()
     sensor_data['pm25'] = pm25.avg()
     sensor_data['pm10'] = pm10.avg()
+    sensor_data['timestamp'] = datetime.datetime.now(pytz.UTC)
     return sensor_data
 
 
@@ -307,5 +308,5 @@ if __name__ == '__main__':
         remaining_time = args.timeout - (now2.seconds + (now2.microseconds / 1000000))
 
         if remaining_time > 0:
-            print("sleeping :", remaining_time)
+            logging.debug("sleeping :{}".format(remaining_time))
             time.sleep(remaining_time)
