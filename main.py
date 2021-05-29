@@ -302,6 +302,6 @@ if __name__ == '__main__':
         now2 = datetime.datetime.now(pytz.UTC) - now1
         remaining_time= (now2.seconds + (now2.microseconds / 1000000) ) - args.timeout
 
-        if remaining_time > 0
+        if remaining_time > 0:
             print("sleepnig :", remaining_time.seconds)
             time.sleep(remaining_time.seconds)
