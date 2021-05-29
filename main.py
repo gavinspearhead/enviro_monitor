@@ -293,4 +293,4 @@ if __name__ == '__main__':
         get_particulates()
         if DEBUG:
             logging.info('Sensor data: {}'.format(collect_all_data()))
-        mc.insertOne(collect_all_data())
+        mc.insert_one(collect_all_data())
