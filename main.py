@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+import datetime
 import os
 import time
 import logging
 import argparse
 import subprocess
+
+import pytz as pytz
+
 from fifo import fifo
 
 from bme280 import BME280
@@ -264,7 +268,7 @@ if __name__ == '__main__':
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
     parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=1.0,
                         help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
-
+    parser.add_argument('-t', '--timeout', metaver="TIMOUT", type=int, default=1, help='timeout betweeen readings')
     args = parser.parse_args()
 
     # Start up the server to expose the metrics.
@@ -284,6 +288,7 @@ if __name__ == '__main__':
     mc = MongoConnector(config).get_collection()
 
     while True:
+        now1 = datetime.datetime.now(pytz.UTC)
         get_temperature(args.factor)
         get_pressure()
         get_humidity()
@@ -294,3 +299,8 @@ if __name__ == '__main__':
         if DEBUG:
             logging.info('Sensor data: {}'.format(collect_all_data()))
         mc.insert_one(collect_all_data())
+        now2 = datetime.datetime.now(pytz.UTC) - now1
+        remaining_time = now2 - datetime.timedelta(seconds=args.timeout)
+        if remaining_time.seconds >=0:
+            print("sleepnig :", remaining_time.seconds + (remaining_time.microseconds / 1000000))
+            time.sleep(remaining_time.seconds + (remaining_time.microseconds / 1000000))
