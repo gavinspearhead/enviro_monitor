@@ -4,6 +4,7 @@ import time
 import logging
 import argparse
 import subprocess
+from fifo import fifo
 
 from bme280 import BME280
 from enviroplus import gas
@@ -41,29 +42,6 @@ class MongoConnector:
     def get_collection(self):
         return self._collection
 
-
-class fifo:
-    def __init__(self, size=10):
-        self._size = size
-        self._count = 0
-        self._data = []
-
-    def add(self, elem):
-        self._data.append(elem)
-        if self._count > self._size:
-            self._data.pop()
-        else:
-            self._count += 1
-
-    def pop(self):
-        if self._count > 0:
-            self._count -= 1
-            return self._data.pop()
-        else:
-            raise IndexError("Empty")
-
-    def avg(self):
-        return sum(self._data) / self._count
 
 
 logging.basicConfig(
