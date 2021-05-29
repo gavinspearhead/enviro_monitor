@@ -26,7 +26,7 @@ except ImportError:
 
 config = {
     'hostname': '192.168.1788.21',
-    'post': 27017,
+    'port': 27017,
     "database": "enviro",
     "collection": "enviro",
     "username": "enviro",
