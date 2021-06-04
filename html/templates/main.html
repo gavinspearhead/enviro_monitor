@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Enviro</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+	<link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+	<link href="{{ url_for('static', filename='css/fontawesome-all.min.css') }}" rel="stylesheet">
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/popper.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/ChartNew.js') }}"></script>
+
+<style> {# included here because relative path #}
+@font-face {
+    font-family: "My Custom Font";
+    src: url("{{ request.script_root }}/static/fonts/fontawesome-webfont.ttf") format("truetype");
+}
+</style>
+</head>
+
+<body class="text-white bg-dark">
+<script type="text/javascript">
+</script>
+<nav class="navbar">
+<!--        <div class="col-3 scrollable bottom_margin" id="logtypes">-->
+<!--            <ul class="list-unstyled components" id="log_list">-->
+<!--                <hr>-->
+<!--                <li><b>Apache</b>-->
+<!--                    <ul id="apache_time_urls">URLs per time</ul>-->
+<!--                </li>-->
+<!--                <li><b>SSH</b>-->
+<!--                    <ul id="ssh_time_ips">IP addresses per time</ul>-->
+<!--                </li>-->
+<!--            </ul>-->
+<!--        </div>-->
+
+            <div>
+            <input type="radio" class="btn-check" name="timeperiod" id="hour" autocomplete="off" checked>
+            <label class="btn btn-secondary" for="hour">Hour</label>
+
+            <input type="radio" class="btn-check" name="timeperiod" id="day" autocomplete="off">
+            <label class="btn btn-secondary" for="day">Day</label>
+
+            <input type="radio" class="btn-check" name="timeperiod" id="week" autocomplete="off">
+            <label class="btn btn-secondary" for="week">Week</label>
+
+            <input type="radio" class="btn-check" name="timeperiod" id="month" autocomplete="off">
+            <label class="btn btn-secondary" for="month">Month</label>
+            </div>
+</nav>
+<div id="maindiv" class="container-fluid max-height scrollable">
+  <br>
+
+    <div class="row ">
+            <h2 id="title"></h2>
+            <div class="row">
+                <div class="col">
+                Temperature:<br>
+                <canvas id="canvas_temperature" height="400" width="400"></canvas>
+                </div>
+                <div class="col">
+                    Humitidy:<br>
+                    <canvas id="canvas_humidity" height="400" width="400"></canvas>
+                </div>
+                <div class="col">
+                    Pressure:<br>
+                    <canvas id="canvas_pressure" height="400" width="400"></canvas>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    Oxidising:<br>
+                    <canvas id="canvas_oxidising" height="400" width="400"></canvas>
+                </div>
+                <div class="col">
+                    Reducing:<br>
+                    <canvas id="canvas_reducing" height="400" width="400"></canvas>
+                </div>
+                <div class="col">
+                    NH3:<br>
+                    <canvas id="canvas_nh3" height="400" width="400"></canvas>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    PM1:<br>
+                    <canvas id="canvas_pm1" height="400" width="400"></canvas>
+                </div>
+                <div class="col">
+                    PM25:<br>
+                    <canvas id="canvas_pm25" height="400" width="400"></canvas>
+                </div>
+                <div class="col">
+                    PM10: <br>
+                    <canvas id="canvas_pm10" height="400" width="400"></canvas>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    Lux:<br>
+                    <canvas id="canvas_lux" height="400" width="400"></canvas>
+                </div>
+                <div class="col">
+                    Proximity:<br>
+                    <canvas id="canvas_proximity" height="400" width="400"></canvas>
+                </div>
+                <div class="col">
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+
+
+<div id="alert_success_bar" class="hidden alert_bar alert_outer">
+    <div class="alert alert-success alert-dismissable fade show" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <span id="alert_success_text"></span>
+    </div>
+</div>
+
+<div id="alert_error_bar" class="hidden alert_bar alert_outer" >
+    <div class="alert alert-danger alert-dismissable fade show" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <span id="alert_error_text"></span>
+    </div>
+</div>
+
+
+<script>
+var script_root = '{{ request.script_root }}';
+</script>
+
+<script type="text/javascript" src="{{ url_for('static', filename='js/custom.js') }}"></script>
+
+</body>
+</html>

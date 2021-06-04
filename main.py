@@ -13,7 +13,7 @@ from fifo import fifo
 from bme280 import BME280
 from enviroplus import gas
 from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError
-from pymongo import MongoClient
+from mongo_connector import MongoConnector
 
 try:
     from smbus2 import SMBus
@@ -37,25 +37,6 @@ config = {
     "password": "S2ytTULCBmEQYZrxF0sC",
     "auth_db": "enviro"
 }
-
-
-class MongoConnector:
-    def __init__(self, config):
-        self._config = config
-        hostname = self._config['hostname'] if self._config['hostname'] != "" else None
-        port = self._config['port'] if self._config['port'] != "" else None
-        if 'username' in self._config and 'password' in self._config and \
-                (self._config['username'] != '' and self._config['password'] != ''):
-            self._mongo = MongoClient(username=self._config['username'], password=self._config['password'],
-                                      authSource=self._config['auth_db'], host=hostname, port=port)
-        else:
-            self._mongo = MongoClient(host=hostname, port=port)
-        self._db = self._mongo[self._config['database']]
-        self._collection = self._db[self._config['collection']]
-
-    def get_collection(self):
-        return self._collection
-
 
 logging.basicConfig(
     format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s',
@@ -267,7 +248,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
-    parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=1.0,
+    parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=None,
                         help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
     parser.add_argument('-t', '--timeout', metavar="TIMOUT", type=int, default=1, help='timeout betweeen readings')
     args = parser.parse_args()
@@ -281,7 +262,6 @@ if __name__ == '__main__':
 
     if args.timeout:
         logging.info("Logging every {} seconds".format(args.timeout))
-
 
     if args.factor:
         logging.info(
