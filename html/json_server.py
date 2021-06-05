@@ -39,7 +39,7 @@ def home_page():
 @app.route("/data/", methods=["POST", "GET"])
 def data_load():
     types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
-             "pm10"]
+             "pm10", 'noise_low', 'noise_mid', 'noise_high']
     rtype = request.json.get('type', '').strip()
     # print(type)
     interval = request.json.get('interval', 1)

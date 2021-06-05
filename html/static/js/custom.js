@@ -102,7 +102,7 @@ function load_graph(canvas_id, type)
 
 function load_all_graphs()
 {
-    var types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux" , "proximity" , "pm1" , "pm25", "pm10"];
+    var types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux" , "proximity" , "pm1" , "pm25", "pm10", "noise_low", "noise_mid", "noise_high"];
     for (let i = 0; i < types.length; i++) {
 //        console.log(types[i]);
         load_graph('canvas_' + types[i], types[i],);
