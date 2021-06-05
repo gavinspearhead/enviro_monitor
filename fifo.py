@@ -20,7 +20,9 @@ class fifo:
             raise IndexError("Empty")
 
     def avg(self):
-        return sum(self._data) / self._count
+        if self._count > 0:
+            return sum(self._data) / self._count
+        return 0
 
     def __str__(self):
         return str(self._data)
