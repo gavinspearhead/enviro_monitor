@@ -5,6 +5,6 @@ config = {
     "database": "enviro",
     "collection": "enviro",
     "username": "enviro",
-    "password": "S2ytTULCBmEQYZrxF0sC",
+    "password": "",
     "auth_db": "enviro"
 }
