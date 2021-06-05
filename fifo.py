@@ -1,6 +1,5 @@
-
 class fifo:
-    def __init__(self, size=10):
+    def __init__(self, size=3):
         self._size = size
         self._count = 0
         self._data = []
@@ -28,7 +27,7 @@ class fifo:
         return str(self._data)
 
 
-if __name__ ==  '__main__':
+if __name__ == '__main__':
     a = fifo()
     for i in range(200):
         a.add(i)

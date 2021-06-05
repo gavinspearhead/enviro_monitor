@@ -75,43 +75,6 @@ noise_mid = fifo()
 noise_low = fifo()
 
 
-#
-#
-# TEMPERATURE = Gauge('temperature', 'Temperature measured (*C)')
-# PRESSURE = Gauge('pressure', 'Pressure measured (hPa)')
-# HUMIDITY = Gauge('humidity', 'Relative humidity measured (%)')
-# OXIDISING = Gauge('oxidising', 'Mostly nitrogen dioxide but could include NO and Hydrogen (Ohms)')
-# REDUCING = Gauge('reducing',
-#                  'Mostly carbon monoxide but could include H2S, Ammonia, Ethanol, Hydrogen, Methane, Propane, Iso-butane (Ohms)')
-# NH3 = Gauge('NH3', 'mostly Ammonia but could also include Hydrogen, Ethanol, Propane, Iso-butane (Ohms)')
-# LUX = Gauge('lux', 'current ambient light level (lux)')
-# PROXIMITY = Gauge('proximity', 'proximity, with larger numbers being closer proximity and vice versa')
-# PM1 = Gauge('PM1', 'Particulate Matter of diameter less than 1 micron. Measured in micrograms per cubic metre (ug/m3)')
-# PM25 = Gauge('PM25',
-#              'Particulate Matter of diameter less than 2.5 microns. Measured in micrograms per cubic metre (ug/m3)')
-# PM10 = Gauge('PM10',
-#              'Particulate Matter of diameter less than 10 microns. Measured in micrograms per cubic metre (ug/m3)')
-# #
-# OXIDISING_HIST = Histogram('oxidising_measurements', 'Histogram of oxidising measurements', buckets=(
-# 0, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70000, 75000, 80000, 85000,
-# 90000, 100000))
-# REDUCING_HIST = Histogram('reducing_measurements', 'Histogram of reducing measurements', buckets=(
-# 0, 100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000, 1100000, 1200000, 1300000, 1400000,
-# 1500000))
-# NH3_HIST = Histogram('nh3_measurements', 'Histogram of nh3 measurements', buckets=(
-# 0, 10000, 110000, 210000, 310000, 410000, 510000, 610000, 710000, 810000, 910000, 1010000, 1110000, 1210000, 1310000,
-# 1410000, 1510000, 1610000, 1710000, 1810000, 1910000, 2000000))
-#
-# PM1_HIST = Histogram('pm1_measurements', 'Histogram of Particulate Matter of diameter less than 1 micron measurements',
-#                      buckets=(0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100))
-# PM25_HIST = Histogram('pm25_measurements',
-#                       'Histogram of Particulate Matter of diameter less than 2.5 micron measurements',
-#                       buckets=(0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100))
-# PM10_HIST = Histogram('pm10_measurements',
-#                       'Histogram of Particulate Matter of diameter less than 10 micron measurements',
-#                       buckets=(0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100))
-
-
 # Sometimes the sensors can't be read. Resetting the i2c
 def reset_i2c():
     subprocess.run(['i2cdetect', '-y', '1'])
@@ -171,13 +134,10 @@ def get_gas():
         readings = gas.read_all()
 
         oxidising.add(readings.oxidising)
-        # OXIDISING_HIST.observe(readings.oxidising)
 
         reducing.add(readings.reducing)
-        # REDUCING_HIST.observe(readings.reducing)
 
         nh3.add(readings.nh3)
-        # NH3_HIST.observe(readings.nh3)
     except IOError:
         logging.error("Could not get gas readings. Resetting i2c.")
         reset_i2c()
@@ -210,10 +170,6 @@ def get_particulates():
         pm25.add(pms_data.pm_ug_per_m3(2.5))
         pm10.add(pms_data.pm_ug_per_m3(10))
 
-        # PM1_HIST.observe(pms_data.pm_ug_per_m3(1.0))
-        # PM25_HIST.observe(pms_data.pm_ug_per_m3(2.5) - pms_data.pm_ug_per_m3(1.0))
-        # PM10_HIST.observe(pms_data.pm_ug_per_m3(10) - pms_data.pm_ug_per_m3(2.5))
-
 
 def get_noise():
     try:
@@ -223,7 +179,6 @@ def get_noise():
         noise_low.add(low)
     except Exception:
         logging.error("Could not get noise readings.")
-
 
 
 def collect_all_data():
@@ -286,8 +241,6 @@ if __name__ == '__main__':
         logging.info(
             "Using compensating algorithm (factor={}) to account for heat leakage from Raspberry Pi board".format(
                 args.factor))
-
-    # logging.info("Listening on http://{}:{}".format(args.bind, args.port))
 
     mc = MongoConnector(config).get_collection()
 
