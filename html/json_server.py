@@ -50,6 +50,8 @@ def data_load():
     now = datetime.datetime.now(pytz.UTC)
     if period == 'hour':
         start_time = now - datetime.timedelta(hours=1)
+    elif period == '4hour':
+        start_time = now - datetime.timedelta(hours=4)
     elif period == 'day':
         start_time = now - datetime.timedelta(hours=24)
     elif period == 'week':
