@@ -1,10 +1,14 @@
 import datetime
 import json
+import os
+import sys
 import traceback
 
 import pytz
 
 from flask import Flask, render_template, request
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from mongo_connector import MongoConnector
 
@@ -33,21 +37,21 @@ def home_page():
 
 
 @app.route("/data/", methods=["POST", "GET"])
-def data():
+def data_load():
     types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
              "pm10"]
-    type = request.json.get('type', '').strip()
+    rtype = request.json.get('type', '').strip()
     # print(type)
     interval = request.json.get('interval', 1)
-    if type not in types:
-        raise ValueError("Invalid type {}".format(type))
-    type = "${}".format(type)
+    if rtype not in types:
+        raise ValueError("Invalid type {}".format(rtype))
+    rtype = "${}".format(rtype)
     period = request.json.get('period', '').strip()
     now = datetime.datetime.now(pytz.UTC)
     if period == 'hour':
         start_time = now - datetime.timedelta(hours=1)
     elif period == 'day':
-            start_time = now - datetime.timedelta(hours=24)
+        start_time = now - datetime.timedelta(hours=24)
     elif period == 'week':
         start_time = now - datetime.timedelta(hours=24 * 7)
     elif period == 'month':
@@ -69,7 +73,7 @@ def data():
                 ]
             },
             'time': {'$min': "$timestamp"},
-            "avg": {"$avg": type}
+            "avg": {"$avg": rtype}
         }
         },
         {"$sort": {"_id": 1}}
@@ -84,11 +88,11 @@ def data():
     labels = []
     for x in res:
         # print(x)
-        print(x)
-        labels.append(x['_id']/ (1000 * interval))
+        # print(x)
+        labels.append(x['_id'] / (1000 * interval))
         data.append(x['avg'])
 
-    print(type , len(data))
+    # print(rtype, len(data))
     return json.dumps({"data": data, "labels": labels})
 
 
@@ -121,7 +125,7 @@ def all_data(name='', count=1):
             except KeyError:
                 row = {}
         data.append(row)
-    print(data)
+    # print(data)
     return json.dumps(data)
 
 

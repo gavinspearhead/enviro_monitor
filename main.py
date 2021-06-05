@@ -9,9 +9,10 @@ import subprocess
 import pytz as pytz
 
 from fifo import fifo
-
+from enviroplus.noise import Noise
 from bme280 import BME280
 from enviroplus import gas
+
 from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError
 from mongo_connector import MongoConnector
 
@@ -56,6 +57,7 @@ DEBUG = os.getenv('DEBUG', 'false') == 'true'
 bus = SMBus(1)
 bme280 = BME280(i2c_dev=bus)
 pms5003 = PMS5003()
+noise = Noise()
 
 temperature = fifo()
 pressure = fifo()
@@ -68,6 +70,9 @@ proximity = fifo()
 pm1 = fifo()
 pm25 = fifo()
 pm10 = fifo()
+noise_high = fifo()
+noise_mid = fifo()
+noise_low = fifo()
 
 
 #
@@ -210,6 +215,17 @@ def get_particulates():
         # PM10_HIST.observe(pms_data.pm_ug_per_m3(10) - pms_data.pm_ug_per_m3(2.5))
 
 
+def get_noise():
+    try:
+        low, mid, high, amp = noise.get_noise_profile()
+        noise_high.add(high)
+        noise_mid.add(mid)
+        noise_low.add(low)
+    except Exception:
+        logging.error("Could not get noise readings.")
+
+
+
 def collect_all_data():
     """Collects all the data currently set"""
     sensor_data = {}
@@ -224,6 +240,9 @@ def collect_all_data():
     sensor_data['pm1'] = pm1.avg()
     sensor_data['pm25'] = pm25.avg()
     sensor_data['pm10'] = pm10.avg()
+    sensor_data['noise_low'] = noise_low.avg()
+    sensor_data['noise_mid'] = noise_mid.avg()
+    sensor_data['noise_high'] = noise_high.avg()
     sensor_data['timestamp'] = datetime.datetime.now(pytz.UTC)
     return sensor_data
 
@@ -250,7 +269,7 @@ if __name__ == '__main__':
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
     parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=None,
                         help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
-    parser.add_argument('-t', '--timeout', metavar="TIMOUT", type=int, default=1, help='timeout betweeen readings')
+    parser.add_argument('-t', '--timeout', metavar="TIMOUT", type=int, default=1, help='timeout between readings')
     args = parser.parse_args()
 
     # Start up the server to expose the metrics.
