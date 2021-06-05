@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import traceback
+import tzlocal
 
 import pytz
 
@@ -29,13 +30,11 @@ def home_page():
 @app.route("/latest/", methods=['POST', 'GET'])
 def latest_data():
     res = mc.find().skip(mc.find().count() - 1)
-    # data = res[0]
     types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
              "pm10", 'noise_low', 'noise_mid', 'noise_high']
-    data= dict()
+    data = dict()
     for i in types:
         data[i] = res[0][i]
-    # print(data)
     return json.dumps({"data": data})
 
 
@@ -55,6 +54,8 @@ def data_load():
         start_time = now - datetime.timedelta(hours=1)
     elif period == '4hour':
         start_time = now - datetime.timedelta(hours=4)
+    elif period == '12hour':
+        start_time = now - datetime.timedelta(hours=12)
     elif period == 'day':
         start_time = now - datetime.timedelta(hours=24)
     elif period == 'week':
@@ -92,17 +93,20 @@ def data_load():
 
     data = []
     labels = []
-    t_format = "%H:%M%S"
+    t_format = "%H:%M"
     if interval > 3600:
-        t_format = "%Y-%m-%d %H:%M%S"
+        t_format = "%Y-%m-%d %H:%M"
 
+    # print(rtype)
     for x in res:
         # print(x)
-        # print(x)
-        ts = x['time'].strftime(t_format)
+        # print(x['time'].replace(tzinfo=pytz.UTC))
+        t = x['time'].replace(tzinfo=pytz.UTC).astimezone(tzlocal.get_localzone())
+        ts = t.strftime(t_format)
         # labels.append(x['_id'] / (1000 * interval))
-        labels.append(ts)
-        data.append(x['avg'])
+        if x['avg'] is not None:
+            labels.append(ts)
+            data.append(round(x['avg'], 2))
 
     # print(rtype, len(data))
     return json.dumps({"data": data, "labels": labels})
