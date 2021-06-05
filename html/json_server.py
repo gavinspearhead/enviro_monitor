@@ -10,17 +10,8 @@ from flask import Flask, render_template, request
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from config import config
 from mongo_connector import MongoConnector
-
-config = {
-    'hostname': '192.168.178.21',
-    'port': 27017,
-    "database": "enviro",
-    "collection": "enviro",
-    "username": "enviro",
-    "password": "S2ytTULCBmEQYZrxF0sC",
-    "auth_db": "enviro"
-}
 
 mc = MongoConnector(config).get_collection()
 app = Flask(__name__)
@@ -28,12 +19,24 @@ app = Flask(__name__)
 
 @app.route('/')
 def home_page():
-    print("main")
     try:
         return render_template("main.html")
     except Exception as e:
         traceback.print_exception(e)
         return json.dumps({'success': False, "message": str(e)}), 200, {'ContentType': 'application/json'}
+
+
+@app.route("/latest/", methods=['POST', 'GET'])
+def latest_data():
+    res = mc.find().skip(mc.find().count() - 1)
+    # data = res[0]
+    types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
+             "pm10", 'noise_low', 'noise_mid', 'noise_high']
+    data= dict()
+    for i in types:
+        data[i] = res[0][i]
+    # print(data)
+    return json.dumps({"data": data})
 
 
 @app.route("/data/", methods=["POST", "GET"])
@@ -75,6 +78,7 @@ def data_load():
                 ]
             },
             'time': {'$min': "$timestamp"},
+            'time2': {'$max': "$timestamp"},
             "avg": {"$avg": rtype}
         }
         },
@@ -88,10 +92,16 @@ def data_load():
 
     data = []
     labels = []
+    t_format = "%H:%M%S"
+    if interval > 3600:
+        t_format = "%Y-%m-%d %H:%M%S"
+
     for x in res:
         # print(x)
         # print(x)
-        labels.append(x['_id'] / (1000 * interval))
+        ts = x['time'].strftime(t_format)
+        # labels.append(x['_id'] / (1000 * interval))
+        labels.append(ts)
         data.append(x['avg'])
 
     # print(rtype, len(data))
@@ -127,7 +137,7 @@ def all_data(name='', count=1):
             except KeyError:
                 row = {}
         data.append(row)
-    # print(data)
+    print(data)
     return json.dumps(data)
 
 

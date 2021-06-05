@@ -1,5 +1,5 @@
-
 from pymongo import MongoClient
+
 
 class MongoConnector:
     def __init__(self, config):
@@ -17,4 +17,3 @@ class MongoConnector:
 
     def get_collection(self):
         return self._collection
-

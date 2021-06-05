@@ -6,6 +6,7 @@ import logging
 import argparse
 import subprocess
 
+import pymongo
 import pytz as pytz
 
 from fifo import fifo
@@ -15,6 +16,7 @@ from enviroplus import gas
 
 from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError
 from mongo_connector import MongoConnector
+from config import config
 
 try:
     from smbus2 import SMBus
@@ -29,15 +31,6 @@ try:
 except ImportError:
     import ltr559
 
-config = {
-    'hostname': '192.168.178.21',
-    'port': 27017,
-    "database": "enviro",
-    "collection": "enviro",
-    "username": "enviro",
-    "password": "S2ytTULCBmEQYZrxF0sC",
-    "auth_db": "enviro"
-}
 
 logging.basicConfig(
     format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s',
@@ -183,7 +176,7 @@ def get_noise():
 
 def collect_all_data():
     """Collects all the data currently set"""
-    sensor_data = {}
+    sensor_data = dict()
     sensor_data['temperature'] = temperature.avg()
     sensor_data['humidity'] = humidity.avg()
     sensor_data['pressure'] = pressure.avg()
@@ -250,13 +243,15 @@ if __name__ == '__main__':
         get_pressure()
         get_humidity()
         get_light()
-        # if not args.enviro:
         get_gas()
         get_noise()
         get_particulates()
         if DEBUG:
             logging.info('Sensor data: {}'.format(collect_all_data()))
-        mc.insert_one(collect_all_data())
+        try:
+            mc.insert_one(collect_all_data())
+        except pymongo.errors.ServerSelectionTimeoutError():
+            logging.error("Can't connect to Mongo - drop reading")
         now2 = datetime.datetime.now(pytz.UTC) - now1
         remaining_time = args.timeout - (now2.seconds + (now2.microseconds / 1000000))
 

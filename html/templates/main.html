@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<title>Enviro</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
 	<link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
 	<link href="{{ url_for('static', filename='css/fontawesome-all.min.css') }}" rel="stylesheet">
@@ -53,79 +53,87 @@
             <input type="radio" class="btn-check" name="timeperiod" id="month" autocomplete="off">
             <label class="btn btn-secondary" for="month">Month</label>
             </div>
+
+    <div class="navbar-right">
+    <span class="badge">Temperature:</span> <span class="badge badge-primary" id="current_temperature"></span> &deg;C
+    <span class="badge">Humidity:</span> <span class="badge badge-primary" id="current_humidity"></span> %
+    <span class="badge">Pressure:</span> <span class="badge badge-primary" id="current_pressure"></span> HPa
+    </div>
 </nav>
-<div id="maindiv" class="container-fluid max-height scrollable">
+
+
+<div id="maindiv" class="container-fluid max-height scrollable no-gutter">
   <br>
 
     <div class="row ">
             <h2 id="title"></h2>
             <div class="row">
-                <div class="col">
+                <div class="col-sm">
                 Temperature (C):<br>
-                <canvas id="canvas_temperature" height="400" width="400"></canvas>
+                <canvas id="canvas_temperature" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     Relative Humidity (%):<br>
-                    <canvas id="canvas_humidity" height="400" width="400"></canvas>
+                    <canvas id="canvas_humidity" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     Pressure (HPa):<br>
-                    <canvas id="canvas_pressure" height="400" width="400"></canvas>
+                    <canvas id="canvas_pressure" height="400" width="500"></canvas>
                 </div>
             </div>
 
             <div class="row">
-                <div class="col">
+                <div class="col-sm">
                     Oxidising gases:<br>
-                    <canvas id="canvas_oxidising" height="400" width="400"></canvas>
+                    <canvas id="canvas_oxidising" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     Reducing gases:<br>
-                    <canvas id="canvas_reducing" height="400" width="400"></canvas>
+                    <canvas id="canvas_reducing" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     NH3:<br>
-                    <canvas id="canvas_nh3" height="400" width="400"></canvas>
+                    <canvas id="canvas_nh3" height="400" width="500"></canvas>
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-sm">
                     Noise Low (Hz):<br>
-                    <canvas id="canvas_noise_low" height="400" width="400"></canvas>
+                    <canvas id="canvas_noise_low" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     Noise Mid (Hz):<br>
-                    <canvas id="canvas_noise_mid" height="400" width="400"></canvas>
+                    <canvas id="canvas_noise_mid" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     Noise High (Hz): <br>
-                    <canvas id="canvas_noise_high" height="400" width="400"></canvas>
+                    <canvas id="canvas_noise_high" height="400" width="500"></canvas>
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-sm">
                     PM1 (ug/m3):<br>
-                    <canvas id="canvas_pm1" height="400" width="400"></canvas>
+                    <canvas id="canvas_pm1" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     PM25 (ug/m3):<br>
-                    <canvas id="canvas_pm25" height="400" width="400"></canvas>
+                    <canvas id="canvas_pm25" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     PM10 (ug/m3): <br>
-                    <canvas id="canvas_pm10" height="400" width="400"></canvas>
+                    <canvas id="canvas_pm10" height="400" width="500"></canvas>
                 </div>
             </div>
             <div class="row">
-                <div class="col">
+                <div class="col-sm">
                     Light (Lux):<br>
-                    <canvas id="canvas_lux" height="400" width="400"></canvas>
+                    <canvas id="canvas_lux" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     Proximity:<br>
-                    <canvas id="canvas_proximity" height="400" width="400"></canvas>
+                    <canvas id="canvas_proximity" height="400" width="500"></canvas>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                 </div>
             </div>
 
