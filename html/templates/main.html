@@ -60,70 +60,64 @@
     <div class="row ">
             <h2 id="title"></h2>
             <div class="row">
-                <div class="col-sm">
+                <div class="col-auto">
                 Temperature (C):<br>
-                <canvas id="canvas_temperature" height="400" width="500"></canvas>
+                <canvas id="canvas_temperature" height="400" width="450"></canvas>
                 </div>
-                <div class="col-sm">
+                <div class="col-auto">
                     Relative Humidity (%):<br>
-                    <canvas id="canvas_humidity" height="400" width="500"></canvas>
+                    <canvas id="canvas_humidity" height="400" width="450"></canvas>
                 </div>
-                <div class="col-sm">
+                <div class="col-auto">
                     Pressure (HPa):<br>
-                    <canvas id="canvas_pressure" height="400" width="500"></canvas>
+                    <canvas id="canvas_pressure" height="400" width="450"></canvas>
+                </div>
+                <div class="col-auto">
+                    Reducing gases (CO):<br>
+                    <canvas id="canvas_reducing" height="400" width="450"></canvas>
                 </div>
             </div>
 
             <div class="row">
-                <div class="col-sm">
-                    Oxidising gases:<br>
-                    <canvas id="canvas_oxidising" height="400" width="500"></canvas>
+                <div class="col-auto">
+                    Ammonia (NH3):<br>
+                    <canvas id="canvas_nh3" height="400" width="450"></canvas>
                 </div>
-                <div class="col-sm">
-                    Reducing gases:<br>
-                    <canvas id="canvas_reducing" height="400" width="500"></canvas>
-                </div>
-                <div class="col-sm">
-                    NH3:<br>
-                    <canvas id="canvas_nh3" height="400" width="500"></canvas>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm">
+                <div class="col-auto">
                     Noise Low (Hz):<br>
-                    <canvas id="canvas_noise_low" height="400" width="500"></canvas>
+                    <canvas id="canvas_noise_low" height="400" width="450"></canvas>
                 </div>
-                <div class="col-sm">
+                <div class="col-auto">
                     Noise Mid (Hz):<br>
-                    <canvas id="canvas_noise_mid" height="400" width="500"></canvas>
+                    <canvas id="canvas_noise_mid" height="400" width="450"></canvas>
                 </div>
-                <div class="col-sm">
+                <div class="col-auto">
                     Noise High (Hz): <br>
-                    <canvas id="canvas_noise_high" height="400" width="500"></canvas>
+                    <canvas id="canvas_noise_high" height="400" width="450"></canvas>
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm">
+                <div class="col-auto">
                     PM1 (ug/m3):<br>
-                    <canvas id="canvas_pm1" height="400" width="500"></canvas>
+                    <canvas id="canvas_pm1" height="400" width="450"></canvas>
                 </div>
-                <div class="col-sm">
+                <div class="col-auto">
                     PM25 (ug/m3):<br>
-                    <canvas id="canvas_pm25" height="400" width="500"></canvas>
+                    <canvas id="canvas_pm25" height="400" width="450"></canvas>
                 </div>
-                <div class="col-sm">
+                <div class="col-auto">
                     PM10 (ug/m3): <br>
-                    <canvas id="canvas_pm10" height="400" width="500"></canvas>
+                    <canvas id="canvas_pm10" height="400" width="450"></canvas>
+                </div>
+                <div class="col-auto">
+                    Light (Lux):<br>
+                    <canvas id="canvas_lux" height="400" width="450"></canvas>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-sm">
-                    Light (Lux):<br>
-                    <canvas id="canvas_lux" height="400" width="500"></canvas>
-                </div>
-                <div class="col-sm">
+        <div class="row">
+                <div class="col-auto">
                     Proximity:<br>
-                    <canvas id="canvas_proximity" height="400" width="500"></canvas>
+                    <canvas id="canvas_proximity" height="400" width="450"></canvas>
                 </div>
                 <div class="col-sm">
                 </div>
@@ -132,7 +126,6 @@
 
         </div>
     </div>
-
 
 
 <div id="alert_success_bar" class="hidden alert_bar alert_outer">
@@ -152,7 +145,6 @@
         <span id="alert_error_text"></span>
     </div>
 </div>
-
 
 <script>
 var script_root = '{{ request.script_root }}';

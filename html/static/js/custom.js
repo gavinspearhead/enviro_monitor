@@ -7,12 +7,12 @@ var max_datapoints = 120;
 function load_graph(canvas_id, type)
 {
     var period = 'day';
-    var interval = 60 * 60 * 10;
-    if ($("#day").is(":checked")) {period = 'day'; interval = 60 * 60 ; } // hours
+    var interval = 60 * 20;
+    if ($("#day").is(":checked")) { console.log("aoeu'"); period = 'day'; interval = 60 * 30 ; } // hours
     else if ($("#hour").is(":checked")) {period = 'hour'; interval = 60 } // minutes
     else if ($("#hour4").is(":checked")) {period = '4hour'; interval = 60 * 4 } // 4 minutes
-    else if ($("#hour12").is(":checked")) {period = '12hour'; interval = 60 * 12 } // 4 minutes
-    else if ($("#week").is(":checked")) {period = 'week'; interval = 60 * 60 *  7 } // day
+    else if ($("#hour12").is(":checked")) {period = '12hour'; interval = 60 * 15 }
+    else if ($("#week").is(":checked")) {period = 'week'; interval = 60 * 15 *  7 } //  6 hours
     else if ($("#month").is(":checked")) {period = 'month'; interval = 60 * 60 * 31 } // day
     console.log(period, interval);
     $.ajax({
@@ -59,7 +59,7 @@ function load_all_graphs()
 {
     var types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux" , "proximity" , "pm1" , "pm25", "pm10", "noise_low", "noise_mid", "noise_high"];
     for (let i = 0; i < types.length; i++) {
-        load_graph('canvas_' + types[i], types[i],);
+        load_graph('canvas_' + types[i], types[i]);
     }
 }
 
