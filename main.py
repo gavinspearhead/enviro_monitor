@@ -535,13 +535,13 @@ if __name__ == '__main__':
                 light_desc = describe_light(data['lux']).upper()
                 img = overlay_text(img, (WIDTH - margin - 1, 18 + spacing), light_desc, font_sm, align_right=True, rectangle=True)
                 light_icon = Image.open(f"{path}/icons/bulb-{light_desc.lower()}.png")
+                humidity_icon = Image.open(f"{path}/icons/humidity-{humidity_desc.lower()}.png")
+
                 img.paste(humidity_icon, (80, 18), mask=light_icon)
                 spacing = font_lg.getsize(temp_string)[1] + 1
                 img = overlay_text(img, (68, 48), humidity_string, font_lg, align_right=True)
                 humidity_desc = describe_humidity(data['humidity']).upper()
                 img = overlay_text(img, (68, 48 + spacing), humidity_desc, font_sm, align_right=True, rectangle=True)
-                humidity_icon = Image.open(f"{path}/icons/humidity-{humidity_desc.lower()}.png")
-                img.paste(humidity_icon, (margin, 48), mask=humidity_icon)
                 img = overlay_text(img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True)
                 img = overlay_text(img, (68, 18 + spacing), range_string, font_sm, align_right=True, rectangle=True)
                 disp.display(img)
