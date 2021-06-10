@@ -20,6 +20,17 @@ from mongo_connector import MongoConnector
 from config import config
 import ST7735
 from fonts.ttf import RobotoMedium as UserFont
+import pytz
+from pytz import timezone
+from astral.geocoder import database, lookup
+from astral.sun import sun
+from datetime import datetime, timedelta
+
+import os
+import time
+import numpy
+import colorsys
+
 
 try:
     from smbus2 import SMBus
@@ -95,7 +106,7 @@ def map_colour(x, centre, start_hue, end_hue, day):
 
     r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(hue, sat, val)]
 
-    return (r, g, b)
+    return r, g, b
 
 
 def x_from_sun_moon_time(progress, period, x_range):
