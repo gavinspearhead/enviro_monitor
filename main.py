@@ -469,6 +469,7 @@ class Display:
         img.paste(self.temp_icon, (self.margin, 18), mask=self.temp_icon)
         img.paste(humidity_icon, (80, 18), mask=light_icon)
         img.paste(pressure_icon, (80, 48), mask=pressure_icon)
+        img.paste(humidity_icon, (self.margin, 48), mask=humidity_icon)
         spacing = self.font_lg.getsize(temp_string)[1] + 1
         img = self.overlay_text(img, (68, 48), humidity_string, self.font_lg, align_right=True)
         img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self.font_sm, align_right=True, rectangle=True)
