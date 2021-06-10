@@ -121,7 +121,7 @@ def sun_moon_time(city_name, time_zone):
 
     # Datetime objects for yesterday, today, tomorrow
     utc = pytz.utc
-    utc_dt = datetime.now(tz=utc)
+    utc_dt = datetime.datetime.now(tz=utc)
     local_dt = utc_dt.astimezone(pytz.timezone(time_zone))
     today = local_dt.date()
     yesterday = today - datetime.timedelta(1)
