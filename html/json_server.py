@@ -42,7 +42,8 @@ def latest_data():
 def data_load():
     types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
              "pm10", 'noise_low', 'noise_mid', 'noise_high']
-    rtype = request.json.get('type', '').strip()
+
+    rtype = request.json.get('type', '')
     # print(type)
     interval = request.json.get('interval', 1)
     if rtype not in types:

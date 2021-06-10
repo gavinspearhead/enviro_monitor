@@ -4,6 +4,66 @@ var g_type = '';
 var g_search = '';
 var max_datapoints = 120;
 
+function load_composite_graph(canvas_id, types)
+{
+ var period = 'day';
+    var interval = 60 * 20;
+    if ($("#day").is(":checked")) { console.log("aoeu'"); period = 'day'; interval = 60 * 30 ; } // hours
+    else if ($("#hour").is(":checked")) {period = 'hour'; interval = 60 } // minutes
+    else if ($("#hour4").is(":checked")) {period = '4hour'; interval = 60 * 4 } // 4 minutes
+    else if ($("#hour12").is(":checked")) {period = '12hour'; interval = 60 * 15 }
+    else if ($("#week").is(":checked")) {period = 'week'; interval = 60 * 15 *  7 } //  6 hours
+    else if ($("#month").is(":checked")) {period = 'month'; interval = 60 * 60 * 31 } // day
+    console.log(period, interval);
+    res_data = [];
+    var options= {
+                    animation : false,
+                    responsive: false,
+                    highLight: true,
+                    annotateLabel: "<%=v2+': '+v1+' '+v3%>",
+                    annotateDisplay: true,
+
+                };
+
+    var colour = ['red', 'green', 'blue'];
+    var labels = null;
+    for (var i=0 ; i < types.length; i++) {
+        $.ajax({
+                url: script_root + '/data/',
+                type: 'POST',
+                data:  JSON.stringify({'type': types[i], 'period': period, 'interval': interval}),
+                cache: false,
+                async: false,
+                contentType: "application/json;charset=UTF-8",
+        }).done(function(data) {
+            var res = JSON.parse(data);
+            if (res.labels.length > 0 && res.data.length > 0) {
+                res_data[i] = {
+//                fill:false,
+                type: "line",
+                    fillColor: colour[i],
+                    strokeColor: colour[i],
+                    data: res.data,
+                    pointDotRadius: 1,
+                    pointColor: "orange",
+                    pointStrokeColor: "orange",
+                    title: types[i]
+                }
+            }
+            console.log(res);
+            if (labels === null) {labels = res.labels;}
+        });
+    }
+
+    var data = {
+        labels: labels,
+        datasets: res_data
+    };
+    console.log(data);
+    new Chart(document.getElementById(canvas_id).getContext("2d")).Line(data, options);
+    return false;
+}
+
 function load_graph(canvas_id, type)
 {
     var period = 'day';
@@ -21,7 +81,6 @@ function load_graph(canvas_id, type)
         data:  JSON.stringify({'type': type,  'period': period, 'interval': interval}),
         cache: false,
         contentType: "application/json;charset=UTF-8",
-
     }).done(function(data) {
         var res = JSON.parse(data);
         var options= {
@@ -35,7 +94,6 @@ function load_graph(canvas_id, type)
         if (res.labels.length == 0 || res.data.length == 0) {
         return
         }
-
         var data = {
         labels: res.labels,
         datasets: [
@@ -50,7 +108,6 @@ function load_graph(canvas_id, type)
         }]
         }
          new Chart(document.getElementById(canvas_id).getContext("2d")).Line(data, options);
-
     });
     return false;
 }
@@ -61,6 +118,8 @@ function load_all_graphs()
     for (let i = 0; i < types.length; i++) {
         load_graph('canvas_' + types[i], types[i]);
     }
+    var composite_type = [ "pm10", "pm25", "pm1"];
+    load_composite_graph('canvas_pm', composite_type)
 }
 
 function round(nr, dig)

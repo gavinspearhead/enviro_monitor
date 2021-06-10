@@ -13,10 +13,13 @@ from fifo import fifo
 from enviroplus.noise import Noise
 from bme280 import BME280
 from enviroplus import gas
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError
+from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError, ChecksumMismatchError, SerialTimeoutError
 from mongo_connector import MongoConnector
 from config import config
+import ST7735
+from fonts.ttf import RobotoMedium as UserFont
 
 try:
     from smbus2 import SMBus
@@ -45,6 +48,29 @@ Press Ctrl+C to exit!
 """)
 
 DEBUG = os.getenv('DEBUG', 'false') == 'true'
+
+
+def overlay_text(img, position, text, font, align_right=False, rectangle=False):
+    draw = ImageDraw.Draw(img)
+    w, h = font.getsize(text)
+    if align_right:
+        x, y = position
+        x -= w
+        position = (x, y)
+    if rectangle:
+        x += 1
+        y += 1
+        position = (x, y)
+        border = 1
+        rect = (x - border, y, x + w, y + h + border)
+        rect_img = Image.new('RGBA', (WIDTH, HEIGHT), color=(0, 0, 0, 0))
+        rect_draw = ImageDraw.Draw(rect_img)
+        rect_draw.rectangle(rect, (255, 255, 255))
+        rect_draw.text(position, text, font=font, fill=(0, 0, 0, 0))
+        img = Image.alpha_composite(img, rect_img)
+    else:
+        draw.text(position, text, font=font, fill=(255, 255, 255))
+    return img
 
 
 class EnviroCollector:
@@ -144,8 +170,12 @@ class EnviroCollector:
         """Get the particulate matter readings"""
         try:
             pms_data = self._pms5003.read()
-        except pmsReadTimeoutError:
-            logging.warning("Failed to read PMS5003")
+        except (pmsReadTimeoutError, SerialTimeoutError) as e:
+            logging.warning("Failed to read PMS5003 {}").format(e)
+            self.reset_i2c()
+        except ChecksumMismatchError as e:
+            logging.warning("Failed to read PMS5003 {}".format(e))
+            self.reset_i2c()
         except IOError:
             logging.error("Could not get particulate matter readings. Resetting i2c.")
             self.reset_i2c()
@@ -224,6 +254,26 @@ if __name__ == '__main__':
     # start_http_server(addr=args.bind, port=args.port)
     # Generate some requests.
 
+    # Initialise the LCD
+    disp = ST7735.ST7735(
+        port=0,
+        cs=1,
+        dc=9,
+        backlight=12,
+        rotation=270,
+        spi_speed_hz=10000000
+    )
+
+    font_sm = ImageFont.truetype(UserFont, 12)
+    font_lg = ImageFont.truetype(UserFont, 14)
+
+
+    disp.begin()
+    margin = 3
+
+    WIDTH = disp.width
+    HEIGHT = disp.height
+
     if args.debug:
         DEBUG = True
 
@@ -243,12 +293,27 @@ if __name__ == '__main__':
     while True:
         ec.update_all()
 
+
+
         now2 = datetime.datetime.now(pytz.UTC) - now1
         remaining_time = args.timeout - (now2.seconds + (now2.microseconds / 1000000))
         if remaining_time <= 0:
             try:
                 now1 = datetime.datetime.now(pytz.UTC)
-                mc.insert_one(ec.collect_all_data())
+                data = ec.collect_all_data()
+                mc.insert_one(data)
+                atemp_str =
+
+                temp_string = "{:.0f}°C".format(data['temperature'])
+                humidity_string = "{:.0f}%".format(data['humidity'])
+                pressure_string = "{}".format_map(int(data['pressure']))
+                img = overlay_text(img, (68, 18), temp_string, font_lg, align_right=True)
+                img = overlay_text(img, (68, 48), humidity_string, font_lg, align_right=True)
+                img = overlay_text(img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True)
+
+                disp.display(img)
+
+
             except pymongo.errors.ServerSelectionTimeoutError():
                 logging.error("Can't connect to Mongo - drop reading")
         time.sleep(.98)
