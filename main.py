@@ -68,7 +68,6 @@ def calculate_y_pos(x, centre):
 
 def circle_coordinates(x, y, radius):
     """Calculates the bounds of a circle, given centre and radius."""
-
     x1 = x - radius  # Left
     x2 = x + radius  # Right
     y1 = y - radius  # Bottom
@@ -314,30 +313,30 @@ class EnviroCollector:
 
 
 class Display:
-    font_sm = ImageFont.truetype(UserFont, 12)
-    font_lg = ImageFont.truetype(UserFont, 14)
-    blur = 50
-    opacity = 125
-    margin = 3
-    mid_hue = 0
-    day_hue = 25
-    sun_radius = 50
-    num_vals = 1000
+    _font_sm = ImageFont.truetype(UserFont, 12)
+    _font_lg = ImageFont.truetype(UserFont, 14)
+    _blur = 50
+    _opacity = 125
+    _margin = 3
+    _mid_hue = 0
+    _day_hue = 25
+    _sun_radius = 50
+    _num_vals = 1000
 
     def __init__(self, city, timezone, path):
-        self.city = city
-        self.timezone = timezone
-        self.disp = ST7735.ST7735(port=0, cs=1, dc=9, backlight=12, rotation=270, spi_speed_hz=10000000)
-        self.disp.begin()
-        self.WIDTH = self.disp.width
-        self.HEIGHT = self.disp.height
-        self.path = path
-        self.temp_icon = Image.open(f"{path}/icons/temperature.png")
-        self.min_temp = None
-        self.max_temp = None
-        self.pressure_vals = []
-        self.time_vals = []
-        self.trend = "-"
+        self._city = city
+        self._timezone = timezone
+        self._disp = ST7735.ST7735(port=0, cs=1, dc=9, backlight=12, rotation=270, spi_speed_hz=10000000)
+        self._disp.begin()
+        self._WIDTH = self._disp.width
+        self._HEIGHT = self._disp.height
+        self._path = path
+        self._temp_icon = Image.open(f"{path}/icons/temperature.png")
+        self._min_temp = None
+        self._max_temp = None
+        self._pressure_vals = []
+        self._time_vals = []
+        self._trend = "-"
 
     @staticmethod
     def describe_pressure(pressure):
@@ -378,48 +377,46 @@ class Display:
             description = "bright"
         return description
 
-
     def analyse_pressure(self, pressure, t):
-        if len(self.pressure_vals) > self.num_vals:
-            self.pressure_vals = self.pressure_vals[1:] + [pressure]
-            self.time_vals = self.time_vals[1:] + [t]
+        if len(self._pressure_vals) > self._num_vals:
+            self._pressure_vals = self._pressure_vals[1:] + [pressure]
+            self._time_vals = self._time_vals[1:] + [t]
 
             # Calculate line of best fit
-            line = numpy.polyfit(self.time_vals, self.pressure_vals, 1, full=True)
+            line = numpy.polyfit(self._time_vals, self._pressure_vals, 1, full=True)
 
             # Calculate slope, variance, and confidence
             slope = line[0][0]
             intercept = line[0][1]
-            variance = numpy.var(self.pressure_vals)
-            residuals = numpy.var([(slope * x + intercept - y) for x, y in zip(self.time_vals, self.pressure_vals)])
+            variance = numpy.var(self._pressure_vals)
+            residuals = numpy.var([(slope * x + intercept - y) for x, y in zip(self._time_vals, self._pressure_vals)])
             r_squared = 1 - residuals / variance
 
             # Calculate change in pressure per hour
             change_per_hour = slope * 60 * 60
             # variance_per_hour = variance * 60 * 60
 
-            mean_pressure = numpy.mean(self.pressure_vals)
+            mean_pressure = numpy.mean(self._pressure_vals)
 
             # Calculate trend
             if r_squared > 0.5:
                 if change_per_hour > 0.5:
-                    self.trend = ">"
+                    self._trend = ">"
                 elif change_per_hour < -0.5:
-                    self.trend = "<"
+                    self._trend = "<"
                 elif -0.5 <= change_per_hour <= 0.5:
-                    self.trend = "-"
+                    self._trend = "-"
 
-                if self.trend != "-":
+                if self._trend != "-":
                     if abs(change_per_hour) > 3:
-                        self.trend *= 2
+                        self._trend *= 2
         else:
-            self.pressure_vals.append(pressure)
-            self.time_vals.append(t)
-            mean_pressure = numpy.mean(self.pressure_vals)
+            self._pressure_vals.append(pressure)
+            self._time_vals.append(t)
+            mean_pressure = numpy.mean(self._pressure_vals)
             change_per_hour = 0
-            self.trend = "-"
-        return mean_pressure, change_per_hour, self.trend
-
+            self._trend = "-"
+        return mean_pressure, change_per_hour, self._trend
 
     def overlay_text(self, img, position, text, font, align_right=False, rectangle=False):
         draw = ImageDraw.Draw(img)
@@ -434,7 +431,7 @@ class Display:
             position = (x, y)
             border = 1
             rect = (x - border, y, x + w, y + h + border)
-            rect_img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0, 0))
+            rect_img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=(0, 0, 0, 0))
             rect_draw = ImageDraw.Draw(rect_img)
             rect_draw.rectangle(rect, (255, 255, 255))
             rect_draw.text(position, text, font=font, fill=(0, 0, 0, 0))
@@ -448,83 +445,84 @@ class Display:
            background colour and overlay a blurred sun/moon."""
 
         # x-coordinate for sun/moon
-        x = x_from_sun_moon_time(progress, period, self.WIDTH)
+        x = x_from_sun_moon_time(progress, period, self._WIDTH)
 
         # If it's day, then move right to left
         if day:
-            x = self.WIDTH - x
+            x = self._WIDTH - x
 
         # Calculate position on sun/moon's curve
-        centre = self.WIDTH / 2
+        centre = self._WIDTH / 2
         y = calculate_y_pos(x, centre)
 
         # Background colour
-        background = map_colour(x, 80, self.mid_hue, self.day_hue, day)
+        background = map_colour(x, 80, self._mid_hue, self._day_hue, day)
 
         # New image for background colour
-        img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=background)
+        img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
         # draw = ImageDraw.Draw(img)
 
         # New image for sun/moon overlay
-        overlay = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0, 0))
+        overlay = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=(0, 0, 0, 0))
         overlay_draw = ImageDraw.Draw(overlay)
 
         # Draw the sun/moon
-        circle = circle_coordinates(x, y, self.sun_radius)
-        overlay_draw.ellipse(circle, fill=(200, 200, 50, self.opacity))
+        circle = circle_coordinates(x, y, self._sun_radius)
+        overlay_draw.ellipse(circle, fill=(200, 200, 50, self._opacity))
 
         # Overlay the sun/moon on the background as an alpha matte
-        composite = Image.alpha_composite(img, overlay).filter(ImageFilter.GaussianBlur(radius=self.blur))
+        composite = Image.alpha_composite(img, overlay).filter(ImageFilter.GaussianBlur(radius=self._blur))
 
         return composite
 
     def update_display(self, data):
         temp_string = "{:.0f}°C".format(data['temperature'])
         humidity_string = "{:.0f}%".format(data['humidity'])
-        mean_pressure, change_per_hour, trend = self.analyse_pressure(data['pressure'], time.time() )
+        mean_pressure, change_per_hour, trend = self.analyse_pressure(data['pressure'], time.time())
         light_string = "{}".format(int(data['lux']))
         light_desc = self.describe_light(data['lux']).upper()
         humidity_desc = self.describe_humidity(data['humidity']).upper()
         pressure_desc = self.describe_pressure(data['pressure']).upper()
         pressure_string = f"{int(mean_pressure):,} {trend}"
 
-        light_icon = Image.open(f"{self.path}/icons/bulb-{light_desc.lower()}.png")
-        humidity_icon = Image.open(f"{self.path}/icons/humidity-{humidity_desc.lower()}.png")
+        light_icon = Image.open(f"{self._path}/icons/bulb-{light_desc.lower()}.png")
+        humidity_icon = Image.open(f"{self._path}/icons/humidity-{humidity_desc.lower()}.png")
         pressure_icon = Image.open(f"{path}/icons/weather-{pressure_desc.lower()}.png")
         if time_elapsed > 30:
-            if self.min_temp is not None and self.max_temp is not None:
-                if data['temperature'] < self.min_temp:
-                    self.min_temp = data['temperature']
-                elif data['temperature'] > self.max_temp:
-                    self.max_temp = data['temperature']
+            if self._min_temp is not None and self._max_temp is not None:
+                if data['temperature'] < self._min_temp:
+                    self._min_temp = data['temperature']
+                elif data['temperature'] > self._max_temp:
+                    self._max_temp = data['temperature']
             else:
-                self.min_temp = data['temperature']
-                self.max_temp = data['temperature']
+                self._min_temp = data['temperature']
+                self._max_temp = data['temperature']
 
-        if self.min_temp is not None and self.max_temp is not None:
-            range_string = f"{self.min_temp:.0f}-{self.max_temp:.0f}"
+        if self._min_temp is not None and self._max_temp is not None:
+            range_string = f"{self._min_temp:.0f}-{self._max_temp:.0f}"
         else:
             range_string = "------"
         background = self.draw_background(progress, period, day)
-        img = self.overlay_text(background, (0 + self.margin, 0 + self.margin), time_string, self.font_lg)
-        img = self.overlay_text(img, (self.WIDTH - self.margin, 0 + self.margin), date_string, self.font_lg,
+        img = self.overlay_text(background, (0 + self._margin, 0 + self._margin), time_string, self._font_lg)
+        img = self.overlay_text(img, (self._WIDTH - self._margin, 0 + self._margin), date_string, self._font_lg,
                                 align_right=True)
-        img = self.overlay_text(img, (68, 18), temp_string, self.font_lg, align_right=True)
-        img = self.overlay_text(img, (self.WIDTH - self.margin, 18), light_string, self.font_lg, align_right=True)
-        spacing = self.font_lg.getsize(light_string.replace(",", ""))[1] + 1
-        img = self.overlay_text(img, (self.WIDTH - self.margin - 1, 18 + spacing), light_desc, self.font_sm,
+        img = self.overlay_text(img, (68, 18), temp_string, self._font_lg, align_right=True)
+        img = self.overlay_text(img, (self._WIDTH - self._margin, 18), light_string, self._font_lg, align_right=True)
+        spacing = self._font_lg.getsize(light_string.replace(",", ""))[1] + 1
+        img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 18 + spacing), light_desc, self._font_sm,
                                 align_right=True, rectangle=True)
-        img.paste(self.temp_icon, (self.margin, 18), mask=self.temp_icon)
+        img.paste(self._temp_icon, (self._margin, 18), mask=self._temp_icon)
         img.paste(humidity_icon, (80, 18), mask=light_icon)
         img.paste(pressure_icon, (80, 48), mask=pressure_icon)
-        img.paste(humidity_icon, (self.margin, 48), mask=humidity_icon)
-        spacing = self.font_lg.getsize(temp_string)[1] + 1
-        img = self.overlay_text(img, (68, 48), humidity_string, self.font_lg, align_right=True)
-        img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self.font_sm, align_right=True, rectangle=True)
-        img = self.overlay_text(img, (self.WIDTH - self.margin, 48), pressure_string, self.font_lg, align_right=True)
-        img = self.overlay_text(img, (68, 18 + spacing), range_string, self.font_sm, align_right=True, rectangle=True)
-        img = self.overlay_text(img, (self.WIDTH - self.margin - 1, 48 + spacing), pressure_desc, self.font_sm, align_right=True, rectangle=True)
-        self.disp.display(img)
+        img.paste(humidity_icon, (self._margin, 48), mask=humidity_icon)
+        spacing = self._font_lg.getsize(temp_string)[1] + 1
+        img = self.overlay_text(img, (68, 48), humidity_string, self._font_lg, align_right=True)
+        img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self._font_sm, align_right=True, rectangle=True)
+        img = self.overlay_text(img, (self._WIDTH - self._margin, 48), pressure_string, self._font_lg, align_right=True)
+        img = self.overlay_text(img, (68, 18 + spacing), range_string, self._font_sm, align_right=True, rectangle=True)
+        img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 48 + spacing), pressure_desc, self._font_sm,
+                                align_right=True, rectangle=True)
+        self._disp.display(img)
 
 
 #
@@ -547,6 +545,8 @@ def str_to_bool(value):
 if __name__ == '__main__':
     timeout = 1
     parser = argparse.ArgumentParser()
+    parser.add_argument("-C", '--city', metavar="CITY", type=str, help="City")
+    parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
     parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
     parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=None,
@@ -567,6 +567,12 @@ if __name__ == '__main__':
 
     if args.debug:
         DEBUG = True
+
+    if args.timezone:
+        time_zone = args.timezone
+
+    if args.city:
+        city = args.city
 
     if args.timeout:
         timeout = args.timeout
