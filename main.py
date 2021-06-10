@@ -305,7 +305,7 @@ if __name__ == '__main__':
 
                 temp_string = "{:.0f}°C".format(data['temperature'])
                 humidity_string = "{:.0f}%".format(data['humidity'])
-                pressure_string = "{}".format_map(int(data['pressure']))
+                pressure_string = "{}".format(int(data['pressure']))
                 img = overlay_text(img, (68, 18), temp_string, font_lg, align_right=True)
                 img = overlay_text(img, (68, 48), humidity_string, font_lg, align_right=True)
                 img = overlay_text(img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True)
