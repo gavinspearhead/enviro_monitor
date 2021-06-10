@@ -434,11 +434,12 @@ class Display:
     def update_display(self, data):
         temp_string = "{:.0f}°C".format(data['temperature'])
         humidity_string = "{:.0f}%".format(data['humidity'])
-        pressure_string = "{}".format(int(data['pressure']))
+        mean_pressure, change_per_hour, trend = self.analyse_pressure(data['pressure'], time.time() )
         light_string = "{}".format(int(data['lux']))
         light_desc = self.describe_light(data['lux']).upper()
         humidity_desc = self.describe_humidity(data['humidity']).upper()
         pressure_desc = self.describe_pressure(data['pressure']).upper()
+        pressure_string = f"{int(mean_pressure):,} {trend}"
 
         light_icon = Image.open(f"{self.path}/icons/bulb-{light_desc.lower()}.png")
         humidity_icon = Image.open(f"{self.path}/icons/humidity-{humidity_desc.lower()}.png")
