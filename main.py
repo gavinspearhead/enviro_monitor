@@ -24,13 +24,12 @@ import pytz
 from pytz import timezone
 from astral.geocoder import database, lookup
 from astral.sun import sun
-from datetime import datetime, timedelta
 
 import os
 import time
 import numpy
 import colorsys
-
+import datetime
 
 try:
     from smbus2 import SMBus
@@ -53,12 +52,12 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S')
 
 logging.info("""enviroplus_exporter.py - Expose readings from the Enviro+ sensor by Pimoroni in Prometheus format
-
 Press Ctrl+C to exit!
-
 """)
 
 DEBUG = os.getenv('DEBUG', 'false') == 'true'
+
+
 def calculate_y_pos(x, centre):
     """Calculates the y-coordinate on a parabolic curve, given x."""
     centre = 80
@@ -78,14 +77,13 @@ def circle_coordinates(x, y, radius):
     return (x1, y1, x2, y2)
 
 
-
 def map_colour(x, centre, start_hue, end_hue, day):
     """Given an x coordinate and a centre point, a start and end hue (in degrees),
        and a Boolean for day or night (day is True, night False), calculate a colour
        hue representing the 'colour' of that time of day."""
 
-    start_hue = start_hue / 360  # Rescale to between 0 and 1
-    end_hue = end_hue / 360
+    start_hue /= 360  # Rescale to between 0 and 1
+    end_hue /= 360
 
     sat = 1.0
 
@@ -111,9 +109,7 @@ def map_colour(x, centre, start_hue, end_hue, day):
 
 def x_from_sun_moon_time(progress, period, x_range):
     """Recalculate/rescale an amount of progress through a time period."""
-
     x = int((progress / period) * x_range)
-
     return x
 
 
@@ -128,8 +124,8 @@ def sun_moon_time(city_name, time_zone):
     utc_dt = datetime.now(tz=utc)
     local_dt = utc_dt.astimezone(pytz.timezone(time_zone))
     today = local_dt.date()
-    yesterday = today - timedelta(1)
-    tomorrow = today + timedelta(1)
+    yesterday = today - datetime.timedelta(1)
+    tomorrow = today + datetime.timedelta(1)
 
     # Sun objects for yesterday, today, tomorrow
     sun_yesterday = sun(city.observer, date=yesterday)
@@ -426,6 +422,13 @@ if __name__ == '__main__':
 
     WIDTH = disp.width
     HEIGHT = disp.height
+    blur = 50
+    opacity = 125
+
+    mid_hue = 0
+    day_hue = 25
+
+    sun_radius = 50
 
     if args.debug:
         DEBUG = True
