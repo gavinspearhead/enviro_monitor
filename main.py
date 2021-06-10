@@ -414,6 +414,8 @@ if __name__ == '__main__':
         spi_speed_hz=10000000
     )
 
+    city_name = "Amsterdam"
+    time_zone = "Europe/Amsterdam"
     font_sm = ImageFont.truetype(UserFont, 12)
     font_lg = ImageFont.truetype(UserFont, 14)
 
@@ -456,6 +458,7 @@ if __name__ == '__main__':
                 now1 = datetime.datetime.now(pytz.UTC)
                 data = ec.collect_all_data()
                 mc.insert_one(data)
+                progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
 
                 temp_string = "{:.0f}°C".format(data['temperature'])
                 humidity_string = "{:.0f}%".format(data['humidity'])
