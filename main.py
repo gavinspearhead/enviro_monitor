@@ -63,7 +63,6 @@ def calculate_y_pos(x, centre):
     """Calculates the y-coordinate on a parabolic curve, given x."""
     centre = 80
     y = 1 / centre * (x - centre) ** 2
-
     return int(y)
 
 
@@ -74,8 +73,7 @@ def circle_coordinates(x, y, radius):
     x2 = x + radius  # Right
     y1 = y - radius  # Bottom
     y2 = y + radius  # Top
-
-    return (x1, y1, x2, y2)
+    return x1, y1, x2, y2
 
 
 def map_colour(x, centre, start_hue, end_hue, day):
@@ -85,7 +83,6 @@ def map_colour(x, centre, start_hue, end_hue, day):
 
     start_hue /= 360  # Rescale to between 0 and 1
     end_hue /= 360
-
     sat = 1.0
 
     # Dim the brightness as you move from the centre to the edges
@@ -163,65 +160,6 @@ def sun_moon_time(city_name, time_zone):
     period = period.total_seconds()
 
     return progress, period, day, local_dt
-
-
-def overlay_text(img, position, text, font, align_right=False, rectangle=False):
-    draw = ImageDraw.Draw(img)
-    w, h = font.getsize(text)
-    if align_right:
-        x, y = position
-        x -= w
-        position = (x, y)
-    if rectangle:
-        x += 1
-        y += 1
-        position = (x, y)
-        border = 1
-        rect = (x - border, y, x + w, y + h + border)
-        rect_img = Image.new('RGBA', (WIDTH, HEIGHT), color=(0, 0, 0, 0))
-        rect_draw = ImageDraw.Draw(rect_img)
-        rect_draw.rectangle(rect, (255, 255, 255))
-        rect_draw.text(position, text, font=font, fill=(0, 0, 0, 0))
-        img = Image.alpha_composite(img, rect_img)
-    else:
-        draw.text(position, text, font=font, fill=(255, 255, 255))
-    return img
-
-
-def draw_background(progress, period, day):
-    """Given an amount of progress through the day or night, draw the
-       background colour and overlay a blurred sun/moon."""
-
-    # x-coordinate for sun/moon
-    x = x_from_sun_moon_time(progress, period, WIDTH)
-
-    # If it's day, then move right to left
-    if day:
-        x = WIDTH - x
-
-    # Calculate position on sun/moon's curve
-    centre = WIDTH / 2
-    y = calculate_y_pos(x, centre)
-
-    # Background colour
-    background = map_colour(x, 80, mid_hue, day_hue, day)
-
-    # New image for background colour
-    img = Image.new('RGBA', (WIDTH, HEIGHT), color=background)
-    # draw = ImageDraw.Draw(img)
-
-    # New image for sun/moon overlay
-    overlay = Image.new('RGBA', (WIDTH, HEIGHT), color=(0, 0, 0, 0))
-    overlay_draw = ImageDraw.Draw(overlay)
-
-    # Draw the sun/moon
-    circle = circle_coordinates(x, y, sun_radius)
-    overlay_draw.ellipse(circle, fill=(200, 200, 50, opacity))
-
-    # Overlay the sun/moon on the background as an alpha matte
-    composite = Image.alpha_composite(img, overlay).filter(ImageFilter.GaussianBlur(radius=blur))
-
-    return composite
 
 
 class EnviroCollector:
@@ -362,6 +300,7 @@ class EnviroCollector:
         sensor_data['noise_mid'] = self.noise_mid.avg()
         sensor_data['noise_high'] = self.noise_high.avg()
         sensor_data['timestamp'] = datetime.datetime.now(pytz.UTC)
+
         return sensor_data
 
     def update_all(self):
@@ -374,44 +313,167 @@ class EnviroCollector:
         self.get_particulates()
 
 
+class Display:
+    font_sm = ImageFont.truetype(UserFont, 12)
+    font_lg = ImageFont.truetype(UserFont, 14)
+    blur = 50
+    opacity = 125
+    margin = 3
+    mid_hue = 0
+    day_hue = 25
+    sun_radius = 50
 
-def describe_pressure(pressure):
-    """Convert pressure into barometer-type description."""
-    if pressure < 970:
-        description = "storm"
-    elif 970 <= pressure < 990:
-        description = "rain"
-    elif 990 <= pressure < 1010:
-        description = "change"
-    elif 1010 <= pressure < 1030:
-        description = "fair"
-    elif pressure >= 1030:
-        description = "dry"
-    else:
-        description = ""
-    return description
+    def __init__(self, city, timezone, path):
+        self.city = city
+        self.timezone = timezone
+        self.disp = ST7735.ST7735(port=0, cs=1, dc=9, backlight=12, rotation=270, spi_speed_hz=10000000)
+        self.disp.begin()
+        self.WIDTH = self.disp.width
+        self.HEIGHT = self.disp.height
+        self.path = path
+        self.temp_icon = Image.open(f"{path}/icons/temperature.png")
+        self.min_temp = None
+        self.max_temp = None
 
+    @staticmethod
+    def describe_pressure(pressure):
+        """Convert pressure into barometer-type description."""
+        if pressure < 970:
+            description = "storm"
+        elif 970 <= pressure < 990:
+            description = "rain"
+        elif 990 <= pressure < 1010:
+            description = "change"
+        elif 1010 <= pressure < 1030:
+            description = "fair"
+        elif pressure >= 1030:
+            description = "dry"
+        else:
+            description = ""
+        return description
 
-def describe_humidity(humidity):
-    """Convert relative humidity into good/bad description."""
-    if 40 < humidity < 60:
-        description = "good"
-    else:
-        description = "bad"
-    return description
+    @staticmethod
+    def describe_humidity(humidity):
+        """Convert relative humidity into good/bad description."""
+        if 40 < humidity < 60:
+            description = "good"
+        else:
+            description = "bad"
+        return description
 
+    @staticmethod
+    def describe_light(light):
+        """Convert light level in lux to descriptive value."""
+        if light < 50:
+            description = "dark"
+        elif 50 <= light < 100:
+            description = "dim"
+        elif 100 <= light < 500:
+            description = "light"
+        elif light >= 500:
+            description = "bright"
+        return description
 
-def describe_light(light):
-    """Convert light level in lux to descriptive value."""
-    if light < 50:
-        description = "dark"
-    elif 50 <= light < 100:
-        description = "dim"
-    elif 100 <= light < 500:
-        description = "light"
-    elif light >= 500:
-        description = "bright"
-    return description
+    def overlay_text(self, img, position, text, font, align_right=False, rectangle=False):
+        draw = ImageDraw.Draw(img)
+        w, h = font.getsize(text)
+        if align_right:
+            x, y = position
+            x -= w
+            position = (x, y)
+        if rectangle:
+            x += 1
+            y += 1
+            position = (x, y)
+            border = 1
+            rect = (x - border, y, x + w, y + h + border)
+            rect_img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0, 0))
+            rect_draw = ImageDraw.Draw(rect_img)
+            rect_draw.rectangle(rect, (255, 255, 255))
+            rect_draw.text(position, text, font=font, fill=(0, 0, 0, 0))
+            img = Image.alpha_composite(img, rect_img)
+        else:
+            draw.text(position, text, font=font, fill=(255, 255, 255))
+        return img
+
+    def draw_background(self, progress, period, day):
+        """Given an amount of progress through the day or night, draw the
+           background colour and overlay a blurred sun/moon."""
+
+        # x-coordinate for sun/moon
+        x = x_from_sun_moon_time(progress, period, self.WIDTH)
+
+        # If it's day, then move right to left
+        if day:
+            x = self.WIDTH - x
+
+        # Calculate position on sun/moon's curve
+        centre = self.WIDTH / 2
+        y = calculate_y_pos(x, centre)
+
+        # Background colour
+        background = map_colour(x, 80, self.mid_hue, self.day_hue, day)
+
+        # New image for background colour
+        img = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=background)
+        # draw = ImageDraw.Draw(img)
+
+        # New image for sun/moon overlay
+        overlay = Image.new('RGBA', (self.WIDTH, self.HEIGHT), color=(0, 0, 0, 0))
+        overlay_draw = ImageDraw.Draw(overlay)
+
+        # Draw the sun/moon
+        circle = circle_coordinates(x, y, self.sun_radius)
+        overlay_draw.ellipse(circle, fill=(200, 200, 50, self.opacity))
+
+        # Overlay the sun/moon on the background as an alpha matte
+        composite = Image.alpha_composite(img, overlay).filter(ImageFilter.GaussianBlur(radius=self.blur))
+
+        return composite
+
+    def update_display(self, data):
+        temp_string = "{:.0f}°C".format(data['temperature'])
+        humidity_string = "{:.0f}%".format(data['humidity'])
+        pressure_string = "{}".format(int(data['pressure']))
+        light_string = "{}".format(int(data['lux']))
+        light_desc = self.describe_light(data['lux']).upper()
+        humidity_desc = self.describe_humidity(data['humidity']).upper()
+
+        light_icon = Image.open(f"{self.path}/icons/bulb-{light_desc.lower()}.png")
+        humidity_icon = Image.open(f"{self.path}/icons/humidity-{humidity_desc.lower()}.png")
+
+        if time_elapsed > 30:
+            if self.min_temp is not None and self.max_temp is not None:
+                if data['temperature'] < self.min_temp:
+                    self.min_temp = data['temperature']
+                elif data['temperature'] > self.max_temp:
+                    self.max_temp = data['temperature']
+            else:
+                self.min_temp = data['temperature']
+                self.max_temp = data['temperature']
+
+        if self.min_temp is not None and self.max_temp is not None:
+            range_string = f"{self.min_temp:.0f}-{self.max_temp:.0f}"
+        else:
+            range_string = "------"
+        background = self.draw_background(progress, period, day)
+        img = self.overlay_text(background, (0 + self.margin, 0 + self.margin), time_string, self.font_lg)
+        img = self.overlay_text(img, (self.WIDTH - self.margin, 0 + self.margin), date_string, self.font_lg,
+                                align_right=True)
+        img = self.overlay_text(img, (68, 18), temp_string, self.font_lg, align_right=True)
+        img = self.overlay_text(img, (self.WIDTH - self.margin, 18), light_string, self.font_lg, align_right=True)
+        spacing = self.font_lg.getsize(light_string.replace(",", ""))[1] + 1
+        img = self.overlay_text(img, (self.WIDTH - self.margin - 1, 18 + spacing), light_desc, self.font_sm,
+                                align_right=True, rectangle=True)
+
+        img.paste(humidity_icon, (80, 18), mask=light_icon)
+        spacing = self.font_lg.getsize(temp_string)[1] + 1
+        img = self.overlay_text(img, (68, 48), humidity_string, self.font_lg, align_right=True)
+        img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self.font_sm, align_right=True, rectangle=True)
+        img = self.overlay_text(img, (self.WIDTH - self.margin, 48), pressure_string, self.font_lg, align_right=True)
+        img = self.overlay_text(img, (68, 18 + spacing), range_string, self.font_sm, align_right=True, rectangle=True)
+        self.disp.display(img)
+
 
 #
 # def get_serial_number():
@@ -445,35 +507,11 @@ if __name__ == '__main__':
     # Generate some requests.
 
     # Initialise the LCD
-    disp = ST7735.ST7735(
-        port=0,
-        cs=1,
-        dc=9,
-        backlight=12,
-        rotation=270,
-        spi_speed_hz=10000000
-    )
 
     city_name = "Amsterdam"
     time_zone = "Europe/Amsterdam"
-    font_sm = ImageFont.truetype(UserFont, 12)
-    font_lg = ImageFont.truetype(UserFont, 14)
-    temp_icon = Image.open(f"{path}/icons/temperature.png")
-    disp.begin()
-    margin = 3
+
     start_time = time.time()
-    WIDTH = disp.width
-    HEIGHT = disp.height
-    blur = 50
-    opacity = 125
-
-    min_temp = None
-    max_temp = None
-
-    mid_hue = 0
-    day_hue = 25
-
-    sun_radius = 50
 
     if args.debug:
         DEBUG = True
@@ -490,6 +528,8 @@ if __name__ == '__main__':
     mc = MongoConnector(config).get_collection()
     ec = EnviroCollector(timeout * 2)
     now1 = datetime.datetime.now(pytz.UTC)
+
+    display = Display(city_name, time_zone, path)
 
     while True:
         ec.update_all()
@@ -508,43 +548,7 @@ if __name__ == '__main__':
                 time_string = local_dt.strftime("%H:%M")
                 date_string = local_dt.strftime("%d %b %y").lstrip('0')
 
-                temp_string = "{:.0f}°C".format(data['temperature'])
-                humidity_string = "{:.0f}%".format(data['humidity'])
-                pressure_string = "{}".format(int(data['pressure']))
-                light_string = "{}".format(int(data['lux']))
-                background = draw_background(progress, period, day)
 
-                if time_elapsed > 30:
-                    if min_temp is not None and max_temp is not None:
-                        if data['temperature'] < min_temp:
-                            min_temp = data['temperature']
-                        elif data['temperature'] > max_temp:
-                            max_temp = data['temperature']
-                    else:
-                        min_temp = data['temperature']
-                        max_temp = data['temperature']
-                if min_temp is not None and max_temp is not None:
-                    range_string = f"{min_temp:.0f}-{max_temp:.0f}"
-                else:
-                    range_string = "------"
-                img = overlay_text(background, (0 + margin, 0 + margin), time_string, font_lg)
-                img = overlay_text(img, (WIDTH - margin, 0 + margin), date_string, font_lg, align_right=True)
-                img = overlay_text(img, (68, 18), temp_string, font_lg, align_right=True)
-                img = overlay_text(img, (WIDTH - margin, 18), light_string, font_lg, align_right=True)
-                spacing = font_lg.getsize(light_string.replace(",", ""))[1] + 1
-                light_desc = describe_light(data['lux']).upper()
-                humidity_desc = describe_humidity(data['humidity']).upper()
-                img = overlay_text(img, (WIDTH - margin - 1, 18 + spacing), light_desc, font_sm, align_right=True, rectangle=True)
-                light_icon = Image.open(f"{path}/icons/bulb-{light_desc.lower()}.png")
-                humidity_icon = Image.open(f"{path}/icons/humidity-{humidity_desc.lower()}.png")
-
-                img.paste(humidity_icon, (80, 18), mask=light_icon)
-                spacing = font_lg.getsize(temp_string)[1] + 1
-                img = overlay_text(img, (68, 48), humidity_string, font_lg, align_right=True)
-                img = overlay_text(img, (68, 48 + spacing), humidity_desc, font_sm, align_right=True, rectangle=True)
-                img = overlay_text(img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True)
-                img = overlay_text(img, (68, 18 + spacing), range_string, font_sm, align_right=True, rectangle=True)
-                disp.display(img)
             except Exception as e:
                 logging.warning("Can't update display {}".format(e))
 
