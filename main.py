@@ -460,6 +460,7 @@ if __name__ == '__main__':
                 mc.insert_one(data)
                 progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
                 time_string = local_dt.strftime("%H:%M")
+                date_string = local_dt.strftime("%d %b %y").lstrip('0')
 
                 temp_string = "{:.0f}°C".format(data['temperature'])
                 humidity_string = "{:.0f}%".format(data['humidity'])
