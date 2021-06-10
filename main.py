@@ -56,6 +56,7 @@ Press Ctrl+C to exit!
 """)
 
 DEBUG = os.getenv('DEBUG', 'false') == 'true'
+path = os.path.dirname(os.path.realpath(__file__))
 
 
 def calculate_y_pos(x, centre):
@@ -373,6 +374,45 @@ class EnviroCollector:
         self.get_particulates()
 
 
+
+def describe_pressure(pressure):
+    """Convert pressure into barometer-type description."""
+    if pressure < 970:
+        description = "storm"
+    elif 970 <= pressure < 990:
+        description = "rain"
+    elif 990 <= pressure < 1010:
+        description = "change"
+    elif 1010 <= pressure < 1030:
+        description = "fair"
+    elif pressure >= 1030:
+        description = "dry"
+    else:
+        description = ""
+    return description
+
+
+def describe_humidity(humidity):
+    """Convert relative humidity into good/bad description."""
+    if 40 < humidity < 60:
+        description = "good"
+    else:
+        description = "bad"
+    return description
+
+
+def describe_light(light):
+    """Convert light level in lux to descriptive value."""
+    if light < 50:
+        description = "dark"
+    elif 50 <= light < 100:
+        description = "dim"
+    elif 100 <= light < 500:
+        description = "light"
+    elif light >= 500:
+        description = "bright"
+    return description
+
 #
 # def get_serial_number():
 #     """Get Raspberry Pi serial number to use as LUFTDATEN_SENSOR_UID"""
@@ -418,14 +458,17 @@ if __name__ == '__main__':
     time_zone = "Europe/Amsterdam"
     font_sm = ImageFont.truetype(UserFont, 12)
     font_lg = ImageFont.truetype(UserFont, 14)
-
+    temp_icon = Image.open(f"{path}/icons/temperature.png")
     disp.begin()
     margin = 3
-
+    start_time = time.time()
     WIDTH = disp.width
     HEIGHT = disp.height
     blur = 50
     opacity = 125
+
+    min_temp = None
+    max_temp = None
 
     mid_hue = 0
     day_hue = 25
@@ -450,7 +493,7 @@ if __name__ == '__main__':
 
     while True:
         ec.update_all()
-
+        time_elapsed = time.time() - start_time
         now2 = datetime.datetime.now(pytz.UTC) - now1
         remaining_time = args.timeout - (now2.seconds + (now2.microseconds / 1000000))
         if remaining_time <= 0:
@@ -458,6 +501,9 @@ if __name__ == '__main__':
                 now1 = datetime.datetime.now(pytz.UTC)
                 data = ec.collect_all_data()
                 mc.insert_one(data)
+            except pymongo.errors.ServerSelectionTimeoutError():
+                logging.error("Can't connect to Mongo - drop reading")
+            try:
                 progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
                 time_string = local_dt.strftime("%H:%M")
                 date_string = local_dt.strftime("%d %b %y").lstrip('0')
@@ -465,19 +511,43 @@ if __name__ == '__main__':
                 temp_string = "{:.0f}°C".format(data['temperature'])
                 humidity_string = "{:.0f}%".format(data['humidity'])
                 pressure_string = "{}".format(int(data['pressure']))
+                light_string = "{}".format(int(data['lux']))
                 background = draw_background(progress, period, day)
 
+                if time_elapsed > 30:
+                    if min_temp is not None and max_temp is not None:
+                        if data['temperature'] < min_temp:
+                            min_temp = data['temperature']
+                        elif data['temperature'] > max_temp:
+                            max_temp = data['temperature']
+                    else:
+                        min_temp = data['temperature']
+                        max_temp = data['temperature']
+                if min_temp is not None and max_temp is not None:
+                    range_string = f"{min_temp:.0f}-{max_temp:.0f}"
+                else:
+                    range_string = "------"
                 img = overlay_text(background, (0 + margin, 0 + margin), time_string, font_lg)
                 img = overlay_text(img, (WIDTH - margin, 0 + margin), date_string, font_lg, align_right=True)
                 img = overlay_text(img, (68, 18), temp_string, font_lg, align_right=True)
+                img = overlay_text(img, (WIDTH - margin, 18), light_string, font_lg, align_right=True)
+                spacing = font_lg.getsize(light_string.replace(",", ""))[1] + 1
+                light_desc = describe_light(data['lux']).upper()
+                img = overlay_text(img, (WIDTH - margin - 1, 18 + spacing), light_desc, font_sm, align_right=True, rectangle=True)
+                light_icon = Image.open(f"{path}/icons/bulb-{light_desc.lower()}.png")
+                img.paste(humidity_icon, (80, 18), mask=light_icon)
+                spacing = font_lg.getsize(temp_string)[1] + 1
                 img = overlay_text(img, (68, 48), humidity_string, font_lg, align_right=True)
+                humidity_desc = describe_humidity(data['humidity']).upper()
+                img = overlay_text(img, (68, 48 + spacing), humidity_desc, font_sm, align_right=True, rectangle=True)
+                humidity_icon = Image.open(f"{path}/icons/humidity-{humidity_desc.lower()}.png")
+                img.paste(humidity_icon, (margin, 48), mask=humidity_icon)
                 img = overlay_text(img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True)
-
+                img = overlay_text(img, (68, 18 + spacing), range_string, font_sm, align_right=True, rectangle=True)
                 disp.display(img)
+            except Exception as e:
+                logging.warning("Can't update display {}".format(e))
 
-
-            except pymongo.errors.ServerSelectionTimeoutError():
-                logging.error("Can't connect to Mongo - drop reading")
         time.sleep(.98)
         if DEBUG:
             logging.info('Sensor data: {}'.format(ec.collect_all_data()))
