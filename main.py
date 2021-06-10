@@ -474,6 +474,7 @@ class Display:
         img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self.font_sm, align_right=True, rectangle=True)
         img = self.overlay_text(img, (self.WIDTH - self.margin, 48), pressure_string, self.font_lg, align_right=True)
         img = self.overlay_text(img, (68, 18 + spacing), range_string, self.font_sm, align_right=True, rectangle=True)
+        img = self.overlay_text(img, (self.WIDTH - self.margin - 1, 48 + spacing), pressure_desc, self.font_sm, align_right=True, rectangle=True)
         self.disp.display(img)
 
 
