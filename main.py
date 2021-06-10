@@ -459,13 +459,14 @@ if __name__ == '__main__':
                 data = ec.collect_all_data()
                 mc.insert_one(data)
                 progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
+                time_string = local_dt.strftime("%H:%M")
 
                 temp_string = "{:.0f}°C".format(data['temperature'])
                 humidity_string = "{:.0f}%".format(data['humidity'])
                 pressure_string = "{}".format(int(data['pressure']))
                 background = draw_background(progress, period, day)
 
-                mg = overlay_text(background, (0 + margin, 0 + margin), time_string, font_lg)
+                img = overlay_text(background, (0 + margin, 0 + margin), time_string, font_lg)
                 img = overlay_text(img, (WIDTH - margin, 0 + margin), date_string, font_lg, align_right=True)
                 img = overlay_text(img, (68, 18), temp_string, font_lg, align_right=True)
                 img = overlay_text(img, (68, 48), humidity_string, font_lg, align_right=True)
