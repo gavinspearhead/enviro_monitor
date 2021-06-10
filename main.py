@@ -476,6 +476,9 @@ class Display:
         return composite
 
     def update_display(self, data):
+        progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
+        time_string = local_dt.strftime("%H:%M")
+        date_string = local_dt.strftime("%d %b %y").lstrip('0')
         temp_string = "{:.0f}°C".format(data['temperature'])
         humidity_string = "{:.0f}%".format(data['humidity'])
         mean_pressure, change_per_hour, trend = self.analyse_pressure(data['pressure'], time.time())
@@ -599,13 +602,9 @@ if __name__ == '__main__':
                 now1 = datetime.datetime.now(pytz.UTC)
                 data = ec.collect_all_data()
                 mc.insert_one(data)
+                display.update_display(data)
             except pymongo.errors.ServerSelectionTimeoutError():
                 logging.error("Can't connect to Mongo - drop reading")
-            try:
-                progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
-                time_string = local_dt.strftime("%H:%M")
-                date_string = local_dt.strftime("%d %b %y").lstrip('0')
-                display.update_display(data)
             except Exception as e:
                 logging.warning("Can't update display {}".format(e))
 
