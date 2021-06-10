@@ -381,43 +381,45 @@ class Display:
 
     def analyse_pressure(self, pressure, t):
         if len(self.pressure_vals) > self.num_vals:
-            pressure_vals = self.pressure_vals[1:] + [pressure]
-            time_vals = self.time_vals[1:] + [t]
+            self.pressure_vals = self.pressure_vals[1:] + [pressure]
+            self.time_vals = self.time_vals[1:] + [t]
 
             # Calculate line of best fit
-            line = numpy.polyfit(time_vals, pressure_vals, 1, full=True)
+            line = numpy.polyfit(self.time_vals, self.pressure_vals, 1, full=True)
 
             # Calculate slope, variance, and confidence
             slope = line[0][0]
             intercept = line[0][1]
-            variance = numpy.var(pressure_vals)
-            residuals = numpy.var([(slope * x + intercept - y) for x, y in zip(time_vals, pressure_vals)])
+            variance = numpy.var(self.pressure_vals)
+            residuals = numpy.var([(slope * x + intercept - y) for x, y in zip(self.time_vals, self.pressure_vals)])
             r_squared = 1 - residuals / variance
 
             # Calculate change in pressure per hour
             change_per_hour = slope * 60 * 60
             # variance_per_hour = variance * 60 * 60
 
-            mean_pressure = numpy.mean(pressure_vals)
+            mean_pressure = numpy.mean(self.pressure_vals)
 
             # Calculate trend
             if r_squared > 0.5:
                 if change_per_hour > 0.5:
-                    trend = ">"
+                    self.trend = ">"
                 elif change_per_hour < -0.5:
-                    trend = "<"
+                    self.trend = "<"
                 elif -0.5 <= change_per_hour <= 0.5:
-                    trend = "-"
+                    self.trend = "-"
 
-                if trend != "-":
+                if self.trend != "-":
                     if abs(change_per_hour) > 3:
-                        trend *= 2
+                        self.trend *= 2
         else:
             self.pressure_vals.append(pressure)
             self.time_vals.append(t)
             mean_pressure = numpy.mean(self.pressure_vals)
             change_per_hour = 0
-            trend = "-"
+            self.trend = "-"
+        return mean_pressure, change_per_hour, self.trend
+
 
     def overlay_text(self, img, position, text, font, align_right=False, rectangle=False):
         draw = ImageDraw.Draw(img)
