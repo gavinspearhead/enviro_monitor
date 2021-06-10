@@ -334,7 +334,7 @@ class Display:
         self.path = path
         self.temp_icon = Image.open(f"{path}/icons/temperature.png")
         self.min_temp = None
-        self.max_temp = Nonea
+        self.max_temp = None
         self.pressure_vals = []
         self.time_vals = []
         self.trend = "-"
