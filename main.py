@@ -232,13 +232,13 @@ class EnviroCollector:
 #                 return str(line.split(":")[1].strip())
 #
 # #
-# def str_to_bool(value):
-#     if value.lower() in {'false', 'f', '0', 'no', 'n'}:
-#         return False
-#     elif value.lower() in {'true', 't', '1', 'yes', 'y'}:
-#         return True
-#     raise ValueError('{} is not a valid boolean value'.format(value))
-#
+def str_to_bool(value):
+    if value.lower() in {'false', 'f', '0', 'no', 'n'}:
+        return False
+    elif value.lower() in {'true', 't', '1', 'yes', 'y'}:
+        return True
+    raise ValueError('{} is not a valid boolean value'.format(value))
+
 
 if __name__ == '__main__':
     timeout = 1
