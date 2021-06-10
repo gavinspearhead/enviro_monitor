@@ -438,10 +438,11 @@ class Display:
         light_string = "{}".format(int(data['lux']))
         light_desc = self.describe_light(data['lux']).upper()
         humidity_desc = self.describe_humidity(data['humidity']).upper()
+        pressure_desc = self.describe_pressure(data['pressure']).upper()
 
         light_icon = Image.open(f"{self.path}/icons/bulb-{light_desc.lower()}.png")
         humidity_icon = Image.open(f"{self.path}/icons/humidity-{humidity_desc.lower()}.png")
-
+        pressure_icon = Image.open(f"{path}/icons/weather-{pressure_desc.lower()}.png")
         if time_elapsed > 30:
             if self.min_temp is not None and self.max_temp is not None:
                 if data['temperature'] < self.min_temp:
@@ -465,8 +466,9 @@ class Display:
         spacing = self.font_lg.getsize(light_string.replace(",", ""))[1] + 1
         img = self.overlay_text(img, (self.WIDTH - self.margin - 1, 18 + spacing), light_desc, self.font_sm,
                                 align_right=True, rectangle=True)
-
+        img.paste(self.temp_icon, (self.margin, 18), mask=self.temp_icon)
         img.paste(humidity_icon, (80, 18), mask=light_icon)
+        img.paste(pressure_icon, (80, 48), mask=pressure_icon)
         spacing = self.font_lg.getsize(temp_string)[1] + 1
         img = self.overlay_text(img, (68, 48), humidity_string, self.font_lg, align_right=True)
         img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self.font_sm, align_right=True, rectangle=True)
