@@ -322,6 +322,7 @@ class Display:
     mid_hue = 0
     day_hue = 25
     sun_radius = 50
+    num_vals = 1000
 
     def __init__(self, city, timezone, path):
         self.city = city
@@ -333,7 +334,10 @@ class Display:
         self.path = path
         self.temp_icon = Image.open(f"{path}/icons/temperature.png")
         self.min_temp = None
-        self.max_temp = None
+        self.max_temp = Nonea
+        self.pressure_vals = []
+        self.time_vals = []
+        self.trend = "-"
 
     @staticmethod
     def describe_pressure(pressure):
@@ -373,6 +377,47 @@ class Display:
         elif light >= 500:
             description = "bright"
         return description
+
+
+    def analyse_pressure(self, pressure, t):
+        if len(self.pressure_vals) > self.num_vals:
+            pressure_vals = self.pressure_vals[1:] + [pressure]
+            time_vals = self.time_vals[1:] + [t]
+
+            # Calculate line of best fit
+            line = numpy.polyfit(time_vals, pressure_vals, 1, full=True)
+
+            # Calculate slope, variance, and confidence
+            slope = line[0][0]
+            intercept = line[0][1]
+            variance = numpy.var(pressure_vals)
+            residuals = numpy.var([(slope * x + intercept - y) for x, y in zip(time_vals, pressure_vals)])
+            r_squared = 1 - residuals / variance
+
+            # Calculate change in pressure per hour
+            change_per_hour = slope * 60 * 60
+            # variance_per_hour = variance * 60 * 60
+
+            mean_pressure = numpy.mean(pressure_vals)
+
+            # Calculate trend
+            if r_squared > 0.5:
+                if change_per_hour > 0.5:
+                    trend = ">"
+                elif change_per_hour < -0.5:
+                    trend = "<"
+                elif -0.5 <= change_per_hour <= 0.5:
+                    trend = "-"
+
+                if trend != "-":
+                    if abs(change_per_hour) > 3:
+                        trend *= 2
+        else:
+            self.pressure_vals.append(pressure)
+            self.time_vals.append(t)
+            mean_pressure = numpy.mean(self.pressure_vals)
+            change_per_hour = 0
+            trend = "-"
 
     def overlay_text(self, img, position, text, font, align_right=False, rectangle=False):
         draw = ImageDraw.Draw(img)
