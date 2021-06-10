@@ -547,8 +547,7 @@ if __name__ == '__main__':
                 progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
                 time_string = local_dt.strftime("%H:%M")
                 date_string = local_dt.strftime("%d %b %y").lstrip('0')
-
-
+                display.update_display(data)
             except Exception as e:
                 logging.warning("Can't update display {}".format(e))
 
