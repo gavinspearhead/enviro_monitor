@@ -302,7 +302,6 @@ if __name__ == '__main__':
                 now1 = datetime.datetime.now(pytz.UTC)
                 data = ec.collect_all_data()
                 mc.insert_one(data)
-                atemp_str =
 
                 temp_string = "{:.0f}°C".format(data['temperature'])
                 humidity_string = "{:.0f}%".format(data['humidity'])
