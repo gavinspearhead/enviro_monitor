@@ -333,7 +333,6 @@ class Display:
         self._time_values = []
         self._trend = "-"
         self.start_time = time.time()
-        self.set_backlight(0)
 
     @staticmethod
     def describe_pressure(pressure):
