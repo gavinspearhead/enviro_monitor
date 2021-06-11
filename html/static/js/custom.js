@@ -22,10 +22,13 @@ function load_composite_graph(canvas_id, types)
                     highLight: true,
                     annotateLabel: "<%=v2+': '+v1+' '+v3%>",
                     annotateDisplay: true,
+    graphTitle : "PM" ,
+        legend: true,
+             datasetFill : true,
 
                 };
 
-    var colour = ['red', 'green', 'blue'];
+    var colour = ['#cd5c5c', '#20b2aa', '#8fbc87'];
     var labels = null;
     for (var i=0 ; i < types.length; i++) {
         $.ajax({
@@ -39,14 +42,13 @@ function load_composite_graph(canvas_id, types)
             var res = JSON.parse(data);
             if (res.labels.length > 0 && res.data.length > 0) {
                 res_data[i] = {
-//                fill:false,
                 type: "line",
                     fillColor: colour[i],
                     strokeColor: colour[i],
                     data: res.data,
                     pointDotRadius: 1,
-                    pointColor: "orange",
-                    pointStrokeColor: "orange",
+                    pointColor: "grey",
+                    pointStrokeColor: "grey",
                     title: types[i]
                 }
             }
@@ -83,7 +85,9 @@ function load_graph(canvas_id, type)
         contentType: "application/json;charset=UTF-8",
     }).done(function(data) {
         var res = JSON.parse(data);
+        console.log(res.title);
         var options= {
+            graphTitle: res.title,
             animation : false,
             responsive: false,
             highLight: true,
@@ -98,8 +102,8 @@ function load_graph(canvas_id, type)
         labels: res.labels,
         datasets: [
         {
-            fillColor: "crimson",
-            strokeColor: 'dark red',
+            fillColor: "#cd5c5c",
+            strokeColor: '#cd5c5c',
             data: res.data,
             pointDotRadius: 1,
             pointColor: "orange",

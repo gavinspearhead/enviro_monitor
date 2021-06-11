@@ -17,6 +17,24 @@ from mongo_connector import MongoConnector
 mc = MongoConnector(config).get_collection()
 app = Flask(__name__)
 
+titles = {
+    "temperature": "Temperature (°C)",
+    'humidity': "Humidity (%)",
+    'pressure': "Pressure (HPa)",
+    'oxidising': "Oxidising Gas (Nitrogen)",
+    'reducing': "Reducing Gas (CO)",
+    'nh3': "Ammonia (NH3)",
+    "lux": "Light (Lux)",
+    "proximity": "Proximity ",
+    "pm": "Particles",
+    "pm1": "Particles 1μm",
+    "pm25": "Particles 2.5μm",
+    "pm10": "Particles 10μm",
+    'noise_low': "Noise Low",
+    'noise_mid': "Noise Mid",
+    'noise_high': "Noise High"
+}
+
 
 @app.route('/')
 def home_page():
@@ -43,7 +61,7 @@ def data_load():
     types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
              "pm10", 'noise_low', 'noise_mid', 'noise_high']
 
-    rtype = request.json.get('type', '')
+    orig_type = rtype = request.json.get('type', '')
     # print(type)
     interval = request.json.get('interval', 1)
     if rtype not in types:
@@ -110,7 +128,9 @@ def data_load():
             data.append(round(x['avg'], 2))
 
     # print(rtype, len(data))
-    return json.dumps({"data": data, "labels": labels})
+    title = titles[orig_type] if orig_type in titles else ""
+    print(rtype, title)
+    return json.dumps({"data": data, "labels": labels, "title": title})
 
 
 @app.route('/all/<int:count>')

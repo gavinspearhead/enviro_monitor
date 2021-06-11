@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-import datetime
-import os
-import time
 import logging
 import argparse
 import subprocess
 
 import pymongo
-import pytz as pytz
 
 from fifo import fifo
 from enviroplus.noise import Noise
@@ -21,7 +17,6 @@ from config import config
 import ST7735
 from fonts.ttf import RobotoMedium as UserFont
 import pytz
-from pytz import timezone
 from astral.geocoder import database, lookup
 from astral.sun import sun
 
@@ -59,9 +54,8 @@ DEBUG = os.getenv('DEBUG', 'false') == 'true'
 path = os.path.dirname(os.path.realpath(__file__))
 
 
-def calculate_y_pos(x, centre):
+def calculate_y_pos(x, centre=80):
     """Calculates the y-coordinate on a parabolic curve, given x."""
-    centre = 80
     y = 1 / centre * (x - centre) ** 2
     return int(y)
 
@@ -184,12 +178,14 @@ class EnviroCollector:
         self.noise_low = fifo(size)
 
     # Sometimes the sensors can't be read. Resetting the i2c
-    def reset_i2c(self):
+    @staticmethod
+    def reset_i2c():
         subprocess.run(['i2cdetect', '-y', '1'])
         time.sleep(2)
 
     # Get the temperature of the CPU for compensation
-    def get_cpu_temperature(self):
+    @staticmethod
+    def get_cpu_temperature():
         with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
             temp = f.read()
             temp = int(temp) / 1000.0
@@ -299,7 +295,6 @@ class EnviroCollector:
         sensor_data['noise_mid'] = self.noise_mid.avg()
         sensor_data['noise_high'] = self.noise_high.avg()
         sensor_data['timestamp'] = datetime.datetime.now(pytz.UTC)
-
         return sensor_data
 
     def update_all(self):
@@ -334,9 +329,11 @@ class Display:
         self._temp_icon = Image.open(f"{path}/icons/temperature.png")
         self._min_temp = None
         self._max_temp = None
-        self._pressure_vals = []
-        self._time_vals = []
+        self._pressure_values = []
+        self._time_values = []
         self._trend = "-"
+        self.start_time = time.time()
+        self.set_backlight(0)
 
     @staticmethod
     def describe_pressure(pressure):
@@ -378,25 +375,25 @@ class Display:
         return description
 
     def analyse_pressure(self, pressure, t):
-        if len(self._pressure_vals) > self._num_vals:
-            self._pressure_vals = self._pressure_vals[1:] + [pressure]
-            self._time_vals = self._time_vals[1:] + [t]
+        if len(self._pressure_values) > self._num_vals:
+            self._pressure_values = self._pressure_values[1:] + [pressure]
+            self._time_values = self._time_values[1:] + [t]
 
             # Calculate line of best fit
-            line = numpy.polyfit(self._time_vals, self._pressure_vals, 1, full=True)
+            line = numpy.polyfit(self._time_values, self._pressure_values, 1, full=True)
 
             # Calculate slope, variance, and confidence
             slope = line[0][0]
             intercept = line[0][1]
-            variance = numpy.var(self._pressure_vals)
-            residuals = numpy.var([(slope * x + intercept - y) for x, y in zip(self._time_vals, self._pressure_vals)])
+            variance = numpy.var(self._pressure_values)
+            residuals = numpy.var([(slope * x + intercept - y) for x, y in zip(self._time_values, self._pressure_values)])
             r_squared = 1 - residuals / variance
 
             # Calculate change in pressure per hour
             change_per_hour = slope * 60 * 60
             # variance_per_hour = variance * 60 * 60
 
-            mean_pressure = numpy.mean(self._pressure_vals)
+            mean_pressure = numpy.mean(self._pressure_values)
 
             # Calculate trend
             if r_squared > 0.5:
@@ -411,9 +408,9 @@ class Display:
                     if abs(change_per_hour) > 3:
                         self._trend *= 2
         else:
-            self._pressure_vals.append(pressure)
-            self._time_vals.append(t)
-            mean_pressure = numpy.mean(self._pressure_vals)
+            self._pressure_values.append(pressure)
+            self._time_values.append(t)
+            mean_pressure = numpy.mean(self._pressure_values)
             change_per_hour = 0
             self._trend = "-"
         return mean_pressure, change_per_hour, self._trend
@@ -476,7 +473,7 @@ class Display:
         return composite
 
     def update_display(self, data):
-        progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
+        progress, period, day, local_dt = sun_moon_time(self._city, self._timezone)
         time_string = local_dt.strftime("%H:%M")
         date_string = local_dt.strftime("%d %b %y").lstrip('0')
         temp_string = "{:.0f}°C".format(data['temperature'])
@@ -491,6 +488,7 @@ class Display:
         light_icon = Image.open(f"{self._path}/icons/bulb-{light_desc.lower()}.png")
         humidity_icon = Image.open(f"{self._path}/icons/humidity-{humidity_desc.lower()}.png")
         pressure_icon = Image.open(f"{path}/icons/weather-{pressure_desc.lower()}.png")
+        time_elapsed = time.time() - self.start_time
         if time_elapsed > 30:
             if self._min_temp is not None and self._max_temp is not None:
                 if data['temperature'] < self._min_temp:
@@ -506,25 +504,25 @@ class Display:
         else:
             range_string = "------"
         background = self.draw_background(progress, period, day)
-        img = self.overlay_text(background, (0 + self._margin, 0 + self._margin), time_string, self._font_lg)
-        img = self.overlay_text(img, (self._WIDTH - self._margin, 0 + self._margin), date_string, self._font_lg,
-                                align_right=True)
-        img = self.overlay_text(img, (68, 18), temp_string, self._font_lg, align_right=True)
-        img = self.overlay_text(img, (self._WIDTH - self._margin, 18), light_string, self._font_lg, align_right=True)
-        spacing = self._font_lg.getsize(light_string.replace(",", ""))[1] + 1
-        img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 18 + spacing), light_desc, self._font_sm,
-                                align_right=True, rectangle=True)
-        img.paste(self._temp_icon, (self._margin, 18), mask=self._temp_icon)
-        img.paste(humidity_icon, (80, 18), mask=light_icon)
-        img.paste(pressure_icon, (80, 48), mask=pressure_icon)
-        img.paste(humidity_icon, (self._margin, 48), mask=humidity_icon)
-        spacing = self._font_lg.getsize(temp_string)[1] + 1
-        img = self.overlay_text(img, (68, 48), humidity_string, self._font_lg, align_right=True)
-        img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self._font_sm, align_right=True, rectangle=True)
-        img = self.overlay_text(img, (self._WIDTH - self._margin, 48), pressure_string, self._font_lg, align_right=True)
-        img = self.overlay_text(img, (68, 18 + spacing), range_string, self._font_sm, align_right=True, rectangle=True)
-        img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 48 + spacing), pressure_desc, self._font_sm,
-                                align_right=True, rectangle=True)
+        # img = self.overlay_text(background, (0 + self._margin, 0 + self._margin), time_string, self._font_lg)
+        # img = self.overlay_text(img, (self._WIDTH - self._margin, 0 + self._margin), date_string, self._font_lg,
+        #                         align_right=True)
+        # img = self.overlay_text(img, (68, 18), temp_string, self._font_lg, align_right=True)
+        # img = self.overlay_text(img, (self._WIDTH - self._margin, 18), light_string, self._font_lg, align_right=True)
+        # spacing = self._font_lg.getsize(light_string.replace(",", ""))[1] + 1
+        # img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 18 + spacing), light_desc, self._font_sm,
+        #                         align_right=True, rectangle=True)
+        # img.paste(self._temp_icon, (self._margin, 18), mask=self._temp_icon)
+        # img.paste(humidity_icon, (80, 18), mask=light_icon)
+        # img.paste(pressure_icon, (80, 48), mask=pressure_icon)
+        # img.paste(humidity_icon, (self._margin, 48), mask=humidity_icon)
+        # spacing = self._font_lg.getsize(temp_string)[1] + 1
+        # img = self.overlay_text(img, (68, 48), humidity_string, self._font_lg, align_right=True)
+        # img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self._font_sm, align_right=True, rectangle=True)
+        # img = self.overlay_text(img, (self._WIDTH - self._margin, 48), pressure_string, self._font_lg, align_right=True)
+        # img = self.overlay_text(img, (68, 18 + spacing), range_string, self._font_sm, align_right=True, rectangle=True)
+        # img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 48 + spacing), pressure_desc, self._font_sm,
+        #                         align_right=True, rectangle=True)
         self._disp.display(img)
 
 
@@ -549,6 +547,7 @@ if __name__ == '__main__':
     timeout = 1
     parser = argparse.ArgumentParser()
     parser.add_argument("-C", '--city', metavar="CITY", type=str, help="City")
+    parser.add_argument("-D", '--display', metavar="DISPLAY", type=str_to_bool, help="Show the display")
     parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
     parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
@@ -565,14 +564,16 @@ if __name__ == '__main__':
 
     city_name = "Amsterdam"
     time_zone = "Europe/Amsterdam"
-
-    start_time = time.time()
+    show_display = False
 
     if args.debug:
         DEBUG = True
 
     if args.timezone:
         time_zone = args.timezone
+
+    if args.display:
+        show_display = True
 
     if args.city:
         city = args.city
@@ -588,18 +589,17 @@ if __name__ == '__main__':
 
     mc = MongoConnector(config).get_collection()
     ec = EnviroCollector(timeout * 2)
-    now1 = datetime.datetime.now(pytz.UTC)
+    now1 = time.time()
 
     display = Display(city_name, time_zone, path)
 
     while True:
         ec.update_all()
-        time_elapsed = time.time() - start_time
-        now2 = datetime.datetime.now(pytz.UTC) - now1
-        remaining_time = args.timeout - (now2.seconds + (now2.microseconds / 1000000))
+        now2 = time.time() - now1
+        remaining_time = args.timeout - now2
         if remaining_time <= 0:
             try:
-                now1 = datetime.datetime.now(pytz.UTC)
+                now1 = time.time()
                 data = ec.collect_all_data()
                 mc.insert_one(data)
                 display.update_display(data)
@@ -612,6 +612,3 @@ if __name__ == '__main__':
         if DEBUG:
             logging.info('Sensor data: {}'.format(ec.collect_all_data()))
 
-        # if remaining_time > 0:
-        #     logging.debug("sleeping :{}".format(remaining_time))
-        #     time.sleep(remaining_time)
