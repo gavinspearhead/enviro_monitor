@@ -4,31 +4,39 @@ var g_type = '';
 var g_search = '';
 var max_datapoints = 120;
 
-function load_composite_graph(canvas_id, types)
-{
- var period = 'day';
+//var colours = ['#e0b296', '#78cdc8', '#2e2e9e'];
+var colours = [ '#76091b', '#c78200', '#2f6473'];
+
+function get_period(){
+
+    var period = 'day';
     var interval = 60 * 20;
     if ($("#day").is(":checked")) { console.log("aoeu'"); period = 'day'; interval = 60 * 30 ; } // hours
     else if ($("#hour").is(":checked")) {period = 'hour'; interval = 60 } // minutes
     else if ($("#hour4").is(":checked")) {period = '4hour'; interval = 60 * 4 } // 4 minutes
     else if ($("#hour12").is(":checked")) {period = '12hour'; interval = 60 * 15 }
-    else if ($("#week").is(":checked")) {period = 'week'; interval = 60 * 15 *  7 } //  6 hours
+    else if ($("#week").is(":checked")) {period = 'week'; interval = 60 * 15 * 7 } //  6 hours
     else if ($("#month").is(":checked")) {period = 'month'; interval = 60 * 60 * 31 } // day
-    console.log(period, interval);
+    return [period, interval];
+    }
+
+function load_composite_graph(canvas_id, types, title)
+{
+    var x= get_period();
+    var period = x[0];
+    var interval = x[1];
     res_data = [];
     var options= {
-                    animation : false,
-                    responsive: false,
-                    highLight: true,
-                    annotateLabel: "<%=v2+': '+v1+' '+v3%>",
-                    annotateDisplay: true,
-    graphTitle : "PM" ,
+        animation : false,
+        responsive: false,
+        highLight: true,
+        annotateLabel: "<%=v2+': '+v1+' '+v3%>",
+        annotateDisplay: true,
+        graphTitle : title ,
         legend: true,
-             datasetFill : true,
+        datasetFill : true,
+    };
 
-                };
-
-    var colour = ['#cd5c5c', '#20b2aa', '#8fbc87'];
     var labels = null;
     for (var i=0 ; i < types.length; i++) {
         $.ajax({
@@ -43,12 +51,9 @@ function load_composite_graph(canvas_id, types)
             if (res.labels.length > 0 && res.data.length > 0) {
                 res_data[i] = {
                 type: "line",
-                    fillColor: colour[i],
-                    strokeColor: colour[i],
+                    fillColor: colours[i],
+                    strokeColor: colours[i],
                     data: res.data,
-                    pointDotRadius: 1,
-                    pointColor: "grey",
-                    pointStrokeColor: "grey",
                     title: types[i]
                 }
             }
@@ -62,21 +67,15 @@ function load_composite_graph(canvas_id, types)
         datasets: res_data
     };
     console.log(data);
-    new Chart(document.getElementById(canvas_id).getContext("2d")).Line(data, options);
+    new Chart(document.getElementById(canvas_id).getContext("2d")).StackedBar(data, options);
     return false;
 }
 
 function load_graph(canvas_id, type)
 {
-    var period = 'day';
-    var interval = 60 * 20;
-    if ($("#day").is(":checked")) { console.log("aoeu'"); period = 'day'; interval = 60 * 30 ; } // hours
-    else if ($("#hour").is(":checked")) {period = 'hour'; interval = 60 } // minutes
-    else if ($("#hour4").is(":checked")) {period = '4hour'; interval = 60 * 4 } // 4 minutes
-    else if ($("#hour12").is(":checked")) {period = '12hour'; interval = 60 * 15 }
-    else if ($("#week").is(":checked")) {period = 'week'; interval = 60 * 15 *  7 } //  6 hours
-    else if ($("#month").is(":checked")) {period = 'month'; interval = 60 * 60 * 31 } // day
-    console.log(period, interval);
+    var x= get_period();
+    var period = x[0];
+    var interval = x[1];
     $.ajax({
         url: script_root + '/data/',
         type: 'POST',
@@ -102,33 +101,33 @@ function load_graph(canvas_id, type)
         labels: res.labels,
         datasets: [
         {
-            fillColor: "#cd5c5c",
-            strokeColor: '#cd5c5c',
+            fillColor: colours[0],
+            strokeColor: colours[0],
             data: res.data,
-            pointDotRadius: 1,
-            pointColor: "orange",
-            pointStrokeColor: "orange",
             title: type
         }]
         }
-         new Chart(document.getElementById(canvas_id).getContext("2d")).Line(data, options);
+         new Chart(document.getElementById(canvas_id).getContext("2d")).StackedBar(data, options);
     });
     return false;
 }
 
 function load_all_graphs()
 {
-    var types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux" , "proximity" , "pm1" , "pm25", "pm10", "noise_low", "noise_mid", "noise_high"];
+    var types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux" , "proximity" ];
+//    , "pm1" , "pm25", "pm10", "noise_low", "noise_mid", "noise_high"];
     for (let i = 0; i < types.length; i++) {
         load_graph('canvas_' + types[i], types[i]);
     }
     var composite_type = [ "pm10", "pm25", "pm1"];
-    load_composite_graph('canvas_pm', composite_type)
+    load_composite_graph('canvas_pm', composite_type, "Particles")
+    var composite_type = [ "noise_high", "noise_mid", "noise_low"];
+    load_composite_graph('canvas_noise', composite_type, "Noise")
 }
 
 function round(nr, dig)
 {
-    exp = 10 ** 2;
+    exp = 10 ** dig;
     return Math.round((nr+ Number.EPSILON) * exp)/exp;
 }
 
@@ -138,16 +137,14 @@ function load_currents()
  $.ajax({
         url: script_root + '/latest/',
         type: 'POST',
-//        data:  JSON.stringify({'type': type,  'period': period, 'interval': interval}),
         cache: false,
         contentType: "application/json;charset=UTF-8",
 
     }).done(function(data) {
         var res = JSON.parse(data);
-//        console.log(res);
-        $("#current_temperature").text(round(res['data']['temperature'],2))
-        $("#current_humidity").text(round(res['data']['humidity'],2 ))
-        $("#current_pressure").text(round(res['data']['pressure'],2 ))
+        $("#current_temperature").text(round(res['data']['temperature'],1));
+        $("#current_humidity").text(round(res['data']['humidity'],1));
+        $("#current_pressure").text(round(res['data']['pressure'],0));
     });
 }
 

@@ -107,9 +107,6 @@ def x_from_sun_moon_time(progress, period, x_range):
 def sun_moon_time(city, time_zone):
     """Calculate the progress through the current sun/moon period (i.e day or
        night) from the last sunrise or sunset, given a datetime object 't'."""
-
-    # city = lookup(city_name, database())
-
     # Datetime objects for yesterday, today, tomorrow
     utc = pytz.utc
     utc_dt = datetime.datetime.now(tz=utc)

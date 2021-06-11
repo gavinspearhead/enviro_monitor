@@ -129,7 +129,7 @@ def data_load():
 
     # print(rtype, len(data))
     title = titles[orig_type] if orig_type in titles else ""
-    print(rtype, title)
+    # print(rtype, title)
     return json.dumps({"data": data, "labels": labels, "title": title})
 
 
@@ -162,7 +162,7 @@ def all_data(name='', count=1):
             except KeyError:
                 row = {}
         data.append(row)
-    print(data)
+    # print(data)
     return json.dumps(data)
 
 
