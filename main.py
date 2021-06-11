@@ -472,17 +472,17 @@ class Display:
 
         return composite
 
-    def update_display(self, data):
+    def update_display(self, data_set):
         progress, period, day, local_dt = sun_moon_time(self._city, self._timezone)
         time_string = local_dt.strftime("%H:%M")
         date_string = local_dt.strftime("%d %b %y").lstrip('0')
-        temp_string = "{:.0f}°C".format(data['temperature'])
-        humidity_string = "{:.0f}%".format(data['humidity'])
-        mean_pressure, change_per_hour, trend = self.analyse_pressure(data['pressure'], time.time())
-        light_string = "{}".format(int(data['lux']))
-        light_desc = self.describe_light(data['lux']).upper()
-        humidity_desc = self.describe_humidity(data['humidity']).upper()
-        pressure_desc = self.describe_pressure(data['pressure']).upper()
+        temp_string = "{:.0f}°C".format(data_set['temperature'])
+        humidity_string = "{:.0f}%".format(data_set['humidity'])
+        mean_pressure, change_per_hour, trend = self.analyse_pressure(data_set['pressure'], time.time())
+        light_string = "{}".format(int(data_set['lux']))
+        light_desc = self.describe_light(data_set['lux']).upper()
+        humidity_desc = self.describe_humidity(data_set['humidity']).upper()
+        pressure_desc = self.describe_pressure(data_set['pressure']).upper()
         pressure_string = f"{int(mean_pressure):,} {trend}"
 
         light_icon = Image.open(f"{self._path}/icons/bulb-{light_desc.lower()}.png")
@@ -491,38 +491,38 @@ class Display:
         time_elapsed = time.time() - self.start_time
         if time_elapsed > 30:
             if self._min_temp is not None and self._max_temp is not None:
-                if data['temperature'] < self._min_temp:
-                    self._min_temp = data['temperature']
-                elif data['temperature'] > self._max_temp:
-                    self._max_temp = data['temperature']
+                if data_set['temperature'] < self._min_temp:
+                    self._min_temp = data_set['temperature']
+                elif data_set['temperature'] > self._max_temp:
+                    self._max_temp = data_set['temperature']
             else:
-                self._min_temp = data['temperature']
-                self._max_temp = data['temperature']
+                self._min_temp = data_set['temperature']
+                self._max_temp = data_set['temperature']
 
         if self._min_temp is not None and self._max_temp is not None:
             range_string = f"{self._min_temp:.0f}-{self._max_temp:.0f}"
         else:
             range_string = "------"
         background = self.draw_background(progress, period, day)
-        # img = self.overlay_text(background, (0 + self._margin, 0 + self._margin), time_string, self._font_lg)
-        # img = self.overlay_text(img, (self._WIDTH - self._margin, 0 + self._margin), date_string, self._font_lg,
-        #                         align_right=True)
-        # img = self.overlay_text(img, (68, 18), temp_string, self._font_lg, align_right=True)
-        # img = self.overlay_text(img, (self._WIDTH - self._margin, 18), light_string, self._font_lg, align_right=True)
-        # spacing = self._font_lg.getsize(light_string.replace(",", ""))[1] + 1
-        # img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 18 + spacing), light_desc, self._font_sm,
-        #                         align_right=True, rectangle=True)
-        # img.paste(self._temp_icon, (self._margin, 18), mask=self._temp_icon)
-        # img.paste(humidity_icon, (80, 18), mask=light_icon)
-        # img.paste(pressure_icon, (80, 48), mask=pressure_icon)
-        # img.paste(humidity_icon, (self._margin, 48), mask=humidity_icon)
-        # spacing = self._font_lg.getsize(temp_string)[1] + 1
-        # img = self.overlay_text(img, (68, 48), humidity_string, self._font_lg, align_right=True)
-        # img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self._font_sm, align_right=True, rectangle=True)
-        # img = self.overlay_text(img, (self._WIDTH - self._margin, 48), pressure_string, self._font_lg, align_right=True)
-        # img = self.overlay_text(img, (68, 18 + spacing), range_string, self._font_sm, align_right=True, rectangle=True)
-        # img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 48 + spacing), pressure_desc, self._font_sm,
-        #                         align_right=True, rectangle=True)
+        img = self.overlay_text(background, (0 + self._margin, 0 + self._margin), time_string, self._font_lg)
+        img = self.overlay_text(img, (self._WIDTH - self._margin, 0 + self._margin), date_string, self._font_lg,
+                                align_right=True)
+        img = self.overlay_text(img, (68, 18), temp_string, self._font_lg, align_right=True)
+        img = self.overlay_text(img, (self._WIDTH - self._margin, 18), light_string, self._font_lg, align_right=True)
+        spacing = self._font_lg.getsize(light_string.replace(",", ""))[1] + 1
+        img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 18 + spacing), light_desc, self._font_sm,
+                                align_right=True, rectangle=True)
+        img.paste(self._temp_icon, (self._margin, 18), mask=self._temp_icon)
+        img.paste(humidity_icon, (80, 18), mask=light_icon)
+        img.paste(pressure_icon, (80, 48), mask=pressure_icon)
+        img.paste(humidity_icon, (self._margin, 48), mask=humidity_icon)
+        spacing = self._font_lg.getsize(temp_string)[1] + 1
+        img = self.overlay_text(img, (68, 48), humidity_string, self._font_lg, align_right=True)
+        img = self.overlay_text(img, (68, 48 + spacing), humidity_desc, self._font_sm, align_right=True, rectangle=True)
+        img = self.overlay_text(img, (self._WIDTH - self._margin, 48), pressure_string, self._font_lg, align_right=True)
+        img = self.overlay_text(img, (68, 18 + spacing), range_string, self._font_sm, align_right=True, rectangle=True)
+        img = self.overlay_text(img, (self._WIDTH - self._margin - 1, 48 + spacing), pressure_desc, self._font_sm,
+                                align_right=True, rectangle=True)
         self._disp.display(img)
 
 
@@ -576,7 +576,7 @@ if __name__ == '__main__':
         show_display = True
 
     if args.city:
-        city = args.city
+        city_name = args.city
 
     if args.timeout:
         timeout = args.timeout
