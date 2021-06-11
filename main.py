@@ -104,11 +104,11 @@ def x_from_sun_moon_time(progress, period, x_range):
     return x
 
 
-def sun_moon_time(city_name, time_zone):
+def sun_moon_time(city, time_zone):
     """Calculate the progress through the current sun/moon period (i.e day or
        night) from the last sunrise or sunset, given a datetime object 't'."""
 
-    city = lookup(city_name, database())
+    # city = lookup(city_name, database())
 
     # Datetime objects for yesterday, today, tomorrow
     utc = pytz.utc
@@ -133,19 +133,16 @@ def sun_moon_time(city_name, time_zone):
     if sunrise_today < local_dt < sunset_today:
         day = True
         period = sunset_today - sunrise_today
-        # mid = sunrise_today + (period / 2)
         progress = local_dt - sunrise_today
 
     elif local_dt > sunset_today:
         day = False
         period = sunrise_tomorrow - sunset_today
-        # mid = sunset_today + (period / 2)
         progress = local_dt - sunset_today
 
     else:
         day = False
         period = sunrise_today - sunset_yesterday
-        # mid = sunset_yesterday + (period / 2)
         progress = local_dt - sunset_yesterday
 
     # Convert time deltas to seconds
@@ -319,7 +316,7 @@ class Display:
     _num_vals = 1000
 
     def __init__(self, city, timezone, path):
-        self._city = city
+        self._city = lookup(city, database())
         self._timezone = timezone
         self._disp = ST7735.ST7735(port=0, cs=1, dc=9, backlight=12, rotation=270, spi_speed_hz=10000000)
         self._disp.begin()
