@@ -382,7 +382,8 @@ class Display:
             slope = line[0][0]
             intercept = line[0][1]
             variance = numpy.var(self._pressure_values)
-            residuals = numpy.var([(slope * x + intercept - y) for x, y in zip(self._time_values, self._pressure_values)])
+            residuals = numpy.var(
+                [(slope * x + intercept - y) for x, y in zip(self._time_values, self._pressure_values)])
             r_squared = 1 - residuals / variance
 
             # Calculate change in pressure per hour
@@ -597,10 +598,11 @@ if __name__ == '__main__':
     while True:
         ec.update_all()
         now2 = time.time() - now1
-        if show_display and ec.get_last_prox() > prox_threshold and not enable_display :
+        if show_display and ec.get_last_prox() > prox_threshold and not enable_display:
+            logging.info("Enabling display")
             enable_display = True
             time_display_enable = now2
-            
+
         remaining_time = args.timeout - now2
         if remaining_time <= 0:
             try:
@@ -608,8 +610,10 @@ if __name__ == '__main__':
                 data = ec.collect_all_data()
                 mc.insert_one(data)
                 if enable_display and now1 < (time_display_enable + display_on_duration):
+                    logging.info("update display")
                     display.update_display(data)
                 else:
+                    logging.info("resetting display")
                     display.disable()
             except pymongo.errors.ServerSelectionTimeoutError():
                 logging.error("Can't connect to Mongo - drop reading")
@@ -619,4 +623,3 @@ if __name__ == '__main__':
         time.sleep(.98)
         if DEBUG:
             logging.info('Sensor data: {}'.format(ec.collect_all_data()))
-
