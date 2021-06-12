@@ -302,8 +302,6 @@ class EnviroCollector:
         # print(self.last_prox)
         return self.last_prox
 
-    def led(self):
-        ltr559.set_proximity_led()
 
 
 class Display:
@@ -633,7 +631,6 @@ if __name__ == '__main__':
                 mc.insert_one(data)
                 # print(enable_display, now1, time_display_enable, display_on_duration)
                 if enable_display and now1 < (time_display_enable + display_on_duration):
-                    ec.led()
                     logging.debug("update display")
                     display.update_display(data)
                 else:
