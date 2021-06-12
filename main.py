@@ -523,7 +523,10 @@ class Display:
         self._disp.display(img)
 
     def disable(self):
-        self._disp.reset()
+        background = 0,0,0
+        img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
+        self._disp.display(img)
+        # self._disp.reset()
 
 
 #
