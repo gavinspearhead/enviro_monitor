@@ -301,6 +301,7 @@ class EnviroCollector:
         self.get_particulates()
 
     def get_last_prox(self):
+        print(self.last_prox)
         return self.last_prox
 
 
