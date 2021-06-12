@@ -2,29 +2,27 @@
 import logging
 import argparse
 import subprocess
-
-import pymongo
-
-from fifo import fifo
-from enviroplus.noise import Noise
-from bme280 import BME280
-from enviroplus import gas
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
-
-from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError, ChecksumMismatchError, SerialTimeoutError
-from mongo_connector import MongoConnector
-from config import config
-import ST7735
-from fonts.ttf import RobotoMedium as UserFont
-import pytz
-from astral.geocoder import database, lookup
-from astral.sun import sun
-
 import os
 import time
 import numpy
 import colorsys
 import datetime
+import pytz
+import pymongo
+import ST7735
+
+from enviroplus.noise import Noise
+from bme280 import BME280
+from enviroplus import gas
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError, ChecksumMismatchError, SerialTimeoutError
+from fonts.ttf import RobotoMedium as UserFont
+from astral.geocoder import database, lookup
+from astral.sun import sun
+
+from fifo import fifo
+from mongo_connector import MongoConnector
+from config import config
 
 try:
     from smbus2 import SMBus
@@ -112,8 +110,8 @@ def sun_moon_time(city, time_zone):
     utc_dt = datetime.datetime.now(tz=utc)
     local_dt = utc_dt.astimezone(pytz.timezone(time_zone))
     today = local_dt.date()
-    yesterday = today - datetime.timedelta(1)
-    tomorrow = today + datetime.timedelta(1)
+    yesterday = today - datetime.timedelta(days=1)
+    tomorrow = today + datetime.timedelta(days=1)
 
     # Sun objects for yesterday, today, tomorrow
     sun_yesterday = sun(city.observer, date=yesterday)
@@ -300,8 +298,8 @@ class EnviroCollector:
         self.get_noise()
         self.get_particulates()
 
-    def get_last_prox(self):
-        print(self.last_prox)
+    def get_last_proximity(self):
+        # print(self.last_prox)
         return self.last_prox
 
 
@@ -528,12 +526,12 @@ class Display:
         self._disp.display(img)
 
     def disable(self):
-        background = 0, 0, 0
-        img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
-        self._disp.display(img)
-        self._backlight = False
-        self._disp.backlight(0)
-        # self._disp.reset()
+        if self._backlight:
+            background = 0, 0, 0
+            img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
+            self._disp.display(img)
+            self._backlight = False
+            self._disp.set_backlight(0)
 
 
 #
@@ -558,7 +556,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-C", '--city', metavar="CITY", type=str, help="City")
     parser.add_argument("-D", '--display', metavar="DISPLAY", type=str_to_bool, help="Show the display")
-    parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
+    parser.add_argument("-d", '--display_on_duration', metavar="DISPLAY_ON_DURATION", type=int, default=30,
+                        help="How long to show the dislay")
+    parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1500,
+                        help="The value indicating the proximity to turn on teh dislay")
+    parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone", default=5)
     parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
     parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=None,
@@ -597,19 +599,25 @@ if __name__ == '__main__':
             "Using compensating algorithm (factor={}) to account for heat leakage from Raspberry Pi board".format(
                 args.factor))
 
+    display_on_duration = 30
+    proximity_threshold = 1000
+    if args.display_on_duration:
+        display_on_duration = args.display_on_duration
+    if args.display_proximity:
+        proximity_threshold = args.display_proximity
+
     mc = MongoConnector(config).get_collection()
     ec = EnviroCollector(timeout * 2)
-    now1 = time.time()
-    prox_threshold = 1000
-    display_on_duration = 30
     display = Display(city_name, time_zone, path)
+
     enable_display = False
     time_display_enable = 0
+    now1 = time.time()
     while True:
-        ec.update_all()
         now = time.time()
-        if show_display and ec.get_last_prox() > prox_threshold and not enable_display:
-            logging.info("Enabling display")
+        ec.update_all()
+        if show_display and ec.get_last_proximity() > proximity_threshold and not enable_display:
+            logging.debug("Enabling display")
             enable_display = True
             time_display_enable = now
 
@@ -622,10 +630,10 @@ if __name__ == '__main__':
                 mc.insert_one(data)
                 print(enable_display, now1, time_display_enable, display_on_duration)
                 if enable_display and now1 < (time_display_enable + display_on_duration):
-                    logging.info("update display")
+                    logging.debug("update display")
                     display.update_display(data)
                 else:
-                    logging.info("resetting display")
+                    logging.debug("resetting display")
                     enable_display = False
                     display.disable()
             except pymongo.errors.ServerSelectionTimeoutError():
@@ -633,6 +641,6 @@ if __name__ == '__main__':
             except Exception as e:
                 logging.warning("Can't update display {}".format(e))
 
-        time.sleep(.98)
+        time.sleep(1.0 - (time.time() - now))
         if DEBUG:
             logging.info('Sensor data: {}'.format(ec.collect_all_data()))
