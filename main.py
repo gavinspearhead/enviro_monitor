@@ -302,6 +302,9 @@ class EnviroCollector:
         # print(self.last_prox)
         return self.last_prox
 
+    def led(self):
+        ltr559.set_proximity_led()
+
 
 class Display:
     _font_sm = ImageFont.truetype(UserFont, 12)
@@ -330,6 +333,8 @@ class Display:
         self._trend = "-"
         self.start_time = time.time()
         self._backlight = False
+        background = 0, 0, 0
+        self._black_img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
 
     @staticmethod
     def describe_pressure(pressure):
@@ -527,9 +532,7 @@ class Display:
 
     def disable(self):
         if self._backlight:
-            background = 0, 0, 0
-            img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
-            self._disp.display(img)
+            self._disp.display(self._black_img)
             self._backlight = False
             self._disp.set_backlight(0)
 
@@ -628,8 +631,9 @@ if __name__ == '__main__':
                 now1 = time.time()
                 data = ec.collect_all_data()
                 mc.insert_one(data)
-                print(enable_display, now1, time_display_enable, display_on_duration)
+                # print(enable_display, now1, time_display_enable, display_on_duration)
                 if enable_display and now1 < (time_display_enable + display_on_duration):
+                    ec.led()
                     logging.debug("update display")
                     display.update_display(data)
                 else:
