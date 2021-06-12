@@ -553,99 +553,102 @@ def str_to_bool(value):
 
 
 if __name__ == '__main__':
-    timeout = 1
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-C", '--city', metavar="CITY", type=str, help="City")
-    parser.add_argument("-D", '--display', metavar="DISPLAY", type=str_to_bool, help="Show the display")
-    parser.add_argument("-O", '--display_on_duration', metavar="DISPLAY_ON_DURATION", type=int, default=30,
-                        help="How long to show the dislay")
-    parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1500,
-                        help="The value indicating the proximity to turn on teh dislay")
-    parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
-    parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
-                        help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
-    parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=None,
-                        help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
-    parser.add_argument('-t', '--timeout', metavar="TIMOUT", type=int, default=5, help='timeout between readings')
-    args = parser.parse_args()
+    try:
+        timeout = 1
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-C", '--city', metavar="CITY", type=str, help="City")
+        parser.add_argument("-D", '--display', metavar="DISPLAY", type=str_to_bool, help="Show the display")
+        parser.add_argument("-O", '--display_on_duration', metavar="DISPLAY_ON_DURATION", type=int, default=30,
+                            help="How long to show the dislay")
+        parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1500,
+                            help="The value indicating the proximity to turn on teh dislay")
+        parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
+        parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
+                            help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
+        parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=None,
+                            help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
+        parser.add_argument('-t', '--timeout', metavar="TIMOUT", type=int, default=5, help='timeout between readings')
+        args = parser.parse_args()
 
-    # Start up the server to expose the metrics.
-    # start_http_server(addr=args.bind, port=args.port)
-    # Generate some requests.
+        # Start up the server to expose the metrics.
+        # start_http_server(addr=args.bind, port=args.port)
+        # Generate some requests.
 
-    # Initialise the LCD
+        # Initialise the LCD
 
-    city_name = "Amsterdam"
-    time_zone = "Europe/Amsterdam"
-    show_display = False
+        city_name = "Amsterdam"
+        time_zone = "Europe/Amsterdam"
+        show_display = False
 
-    if args.debug:
-        DEBUG = True
+        if args.debug:
+            DEBUG = True
 
-    if args.timezone:
-        time_zone = args.timezone
+        if args.timezone:
+            time_zone = args.timezone
 
-    if args.display:
-        show_display = True
+        if args.display:
+            show_display = True
 
-    if args.city:
-        city_name = args.city
+        if args.city:
+            city_name = args.city
 
-    if args.timeout:
-        timeout = args.timeout
-        logging.info("Logging every {} seconds".format(args.timeout))
+        if args.timeout:
+            timeout = args.timeout
+            logging.info("Logging every {} seconds".format(args.timeout))
 
-    if args.factor:
-        logging.info(
-            "Using compensating algorithm (factor={}) to account for heat leakage from Raspberry Pi board".format(
-                args.factor))
+        if args.factor:
+            logging.info(
+                "Using compensating algorithm (factor={}) to account for heat leakage from Raspberry Pi board".format(
+                    args.factor))
 
-    display_on_duration = 30
-    proximity_threshold = 1000
-    if args.display_on_duration:
-        display_on_duration = args.display_on_duration
-    if args.display_proximity:
-        proximity_threshold = args.display_proximity
+        display_on_duration = 30
+        proximity_threshold = 1000
+        if args.display_on_duration:
+            display_on_duration = args.display_on_duration
+        if args.display_proximity:
+            proximity_threshold = args.display_proximity
 
-    mc = MongoConnector(config).get_collection()
-    ec = EnviroCollector(timeout * 2)
-    display = Display(city_name, time_zone, path)
+        mc = MongoConnector(config).get_collection()
+        ec = EnviroCollector(timeout * 2)
+        display = Display(city_name, time_zone, path)
 
-    enable_display = False
-    time_display_enable = 0
-    now1 = time.time()
-    while True:
-        now = time.time()
-        ec.update_all()
-        if show_display and ec.get_last_proximity() > proximity_threshold and not enable_display:
-            logging.debug("Enabling display")
-            enable_display = True
-            time_display_enable = now
+        enable_display = False
+        time_display_enable = 0
+        now1 = time.time()
+        while True:
+            now = time.time()
+            ec.update_all()
+            if show_display and ec.get_last_proximity() > proximity_threshold and not enable_display:
+                logging.debug("Enabling display")
+                enable_display = True
+                time_display_enable = now
 
-        now2 = now - now1
-        remaining_time = args.timeout - now2
-        if enable_display and now1 < (time_display_enable + display_on_duration):
-            logging.debug("update display")
-            display.update_display(data)
-            enable_display = True
-        elif enable_display:
-            logging.debug("resetting display")
-            enable_display = False
-            display.disable()
-        if remaining_time <= 0:
-            try:
-                now1 = time.time()
-                data = ec.collect_all_data()
-                mc.insert_one(data)
-                # print(enable_display, now1, time_display_enable, display_on_duration)
-                if enable_display and now1 < (time_display_enable + display_on_duration):
-                    logging.debug("update display")
-                    display.update_display(data)
-            except pymongo.errors.ServerSelectionTimeoutError():
-                logging.error("Can't connect to Mongo - drop reading")
-            except Exception as e:
-                logging.warning("Can't update display {}".format(e))
+            now2 = now - now1
+            remaining_time = args.timeout - now2
+            if enable_display and now1 < (time_display_enable + display_on_duration):
+                logging.debug("update display")
+                display.update_display(data)
+                enable_display = True
+            elif enable_display:
+                logging.debug("resetting display")
+                enable_display = False
+                display.disable()
+            if remaining_time <= 0:
+                try:
+                    now1 = time.time()
+                    data = ec.collect_all_data()
+                    mc.insert_one(data)
+                    # print(enable_display, now1, time_display_enable, display_on_duration)
+                    if enable_display and now1 < (time_display_enable + display_on_duration):
+                        logging.debug("update display")
+                        display.update_display(data)
+                except pymongo.errors.ServerSelectionTimeoutError():
+                    logging.error("Can't connect to Mongo - drop reading")
+                except Exception as e:
+                    logging.warning("Can't update display {}".format(e))
 
-        time.sleep(max(0.0, 1.0 - (time.time() - now)))
-        if DEBUG:
-            logging.info('Sensor data: {}'.format(ec.collect_all_data()))
+            time.sleep(max(0.0, 1.0 - (time.time() - now)))
+            if DEBUG:
+                logging.info('Sensor data: {}'.format(ec.collect_all_data()))
+    except KeyboardInterrupt:
+        display.disable()
