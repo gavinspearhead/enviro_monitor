@@ -524,7 +524,7 @@ class Display:
         self._disp.display(img)
 
     def disable(self):
-        background = 0,0,0
+        background = 0, 0, 0
         img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
         self._disp.display(img)
         # self._disp.reset()
@@ -601,19 +601,20 @@ if __name__ == '__main__':
     time_display_enable = 0
     while True:
         ec.update_all()
-        now2 = time.time() - now1
+        now = time.time()
         if show_display and ec.get_last_prox() > prox_threshold and not enable_display:
             logging.info("Enabling display")
             enable_display = True
-            time_display_enable = now2
+            time_display_enable = now
 
+        now2 = now - now1
         remaining_time = args.timeout - now2
         if remaining_time <= 0:
             try:
                 now1 = time.time()
                 data = ec.collect_all_data()
                 mc.insert_one(data)
-                print(enable_display, now1, time_display_enable,display_on_duration)
+                print(enable_display, now1, time_display_enable, display_on_duration)
                 if enable_display and now1 < (time_display_enable + display_on_duration):
                     logging.info("update display")
                     display.update_display(data)
