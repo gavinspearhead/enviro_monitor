@@ -646,6 +646,6 @@ if __name__ == '__main__':
             except Exception as e:
                 logging.warning("Can't update display {}".format(e))
 
-        time.sleep(max(0, 1.0 - (time.time() - now)))
+        time.sleep(max(0.0, 1.0 - (time.time() - now)))
         if DEBUG:
             logging.info('Sensor data: {}'.format(ec.collect_all_data()))
