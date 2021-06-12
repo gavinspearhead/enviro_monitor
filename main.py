@@ -613,6 +613,7 @@ if __name__ == '__main__':
                 now1 = time.time()
                 data = ec.collect_all_data()
                 mc.insert_one(data)
+                print(enable_display, now1, time_display_enable,display_on_duration)
                 if enable_display and now1 < (time_display_enable + display_on_duration):
                     logging.info("update display")
                     display.update_display(data)
