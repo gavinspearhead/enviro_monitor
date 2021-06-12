@@ -561,12 +561,12 @@ if __name__ == '__main__':
                         help="How long to show the dislay")
     parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1500,
                         help="The value indicating the proximity to turn on teh dislay")
-    parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone", default=5)
+    parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
     parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
                         help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
     parser.add_argument("-f", "--factor", metavar='FACTOR', type=float, default=None,
                         help="The compensation factor to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
-    parser.add_argument('-t', '--timeout', metavar="TIMOUT", type=int, default=1, help='timeout between readings')
+    parser.add_argument('-t', '--timeout', metavar="TIMOUT", type=int, default=5, help='timeout between readings')
     args = parser.parse_args()
 
     # Start up the server to expose the metrics.
@@ -624,6 +624,14 @@ if __name__ == '__main__':
 
         now2 = now - now1
         remaining_time = args.timeout - now2
+        if enable_display and now1 < (time_display_enable + display_on_duration):
+            logging.debug("update display")
+            display.update_display(data)
+            enable_display = True
+        elif enable_display:
+            logging.debug("resetting display")
+            enable_display = False
+            display.disable()
         if remaining_time <= 0:
             try:
                 now1 = time.time()
@@ -633,10 +641,6 @@ if __name__ == '__main__':
                 if enable_display and now1 < (time_display_enable + display_on_duration):
                     logging.debug("update display")
                     display.update_display(data)
-                else:
-                    logging.debug("resetting display")
-                    enable_display = False
-                    display.disable()
             except pymongo.errors.ServerSelectionTimeoutError():
                 logging.error("Can't connect to Mongo - drop reading")
             except Exception as e:
