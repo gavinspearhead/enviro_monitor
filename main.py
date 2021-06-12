@@ -52,6 +52,14 @@ DEBUG = os.getenv('DEBUG', 'false') == 'true'
 path = os.path.dirname(os.path.realpath(__file__))
 
 
+def str_to_bool(value):
+    if value.lower() in {'false', 'f', '0', 'no', 'n', 'on'}:
+        return False
+    elif value.lower() in {'true', 't', '1', 'yes', 'y', 'off'}:
+        return True
+    raise ValueError('{} is not a valid boolean value'.format(value))
+
+
 def calculate_y_pos(x, centre=80):
     """Calculates the y-coordinate on a parabolic curve, given x."""
     y = 1 / centre * (x - centre) ** 2
@@ -150,7 +158,7 @@ def sun_moon_time(city, time_zone):
 class EnviroCollector:
     def __init__(self, size=5):
         bus = SMBus(1)
-        self.last_prox = 0
+        self.last_proximity = 0
         self._bme280 = BME280(i2c_dev=bus)
         self._pms5003 = PMS5003()
         self._noise = Noise()
@@ -183,7 +191,7 @@ class EnviroCollector:
             temp = int(temp) / 1000.0
         return temp
 
-    def get_temperature(self, factor):
+    def get_temperature(self, factor=None):
         """Get temperature from the weather sensor"""
         # Tuning factor for compensation. Decrease this number to adjust the
         # temperature down, and increase to adjust up
@@ -235,7 +243,7 @@ class EnviroCollector:
         try:
             _lux = ltr559.get_lux()
             _prox = ltr559.get_proximity()
-            self.last_prox = _prox
+            self.last_proximity = _prox
             self.lux.add(_lux)
             self.proximity.add(_prox)
         except IOError:
@@ -300,8 +308,7 @@ class EnviroCollector:
 
     def get_last_proximity(self):
         # print(self.last_prox)
-        return self.last_prox
-
+        return self.last_proximity
 
 
 class Display:
@@ -331,8 +338,7 @@ class Display:
         self._trend = "-"
         self.start_time = time.time()
         self._backlight = False
-        background = 0, 0, 0
-        self._black_img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
+        self._black_img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=(0,0,0))
 
     @staticmethod
     def describe_pressure(pressure):
@@ -473,9 +479,7 @@ class Display:
         return composite
 
     def update_display(self, data_set):
-        if not self._backlight:
-            self._disp.set_backlight(1)
-            self._backlight = True
+        self.enable()
         progress, period, day, local_dt = sun_moon_time(self._city, self._timezone)
         time_string = local_dt.strftime("%H:%M")
         date_string = local_dt.strftime("%d %b %y").lstrip('0')
@@ -528,28 +532,16 @@ class Display:
                                 align_right=True, rectangle=True)
         self._disp.display(img)
 
-    def disable(self):
-        if self._backlight:
+    def disable(self, force=False):
+        if self._backlight or force:
             self._disp.display(self._black_img)
             self._backlight = False
             self._disp.set_backlight(0)
 
-
-#
-# def get_serial_number():
-#     """Get Raspberry Pi serial number to use as LUFTDATEN_SENSOR_UID"""
-#     with open('/proc/cpuinfo', 'r') as f:
-#         for line in f:
-#             if line[0:6] == 'Serial':
-#                 return str(line.split(":")[1].strip())
-#
-# #
-def str_to_bool(value):
-    if value.lower() in {'false', 'f', '0', 'no', 'n'}:
-        return False
-    elif value.lower() in {'true', 't', '1', 'yes', 'y'}:
-        return True
-    raise ValueError('{} is not a valid boolean value'.format(value))
+    def enable(self):
+        if not self._backlight:
+            self._backlight = True
+            self._disp.set_backlight(1)
 
 
 if __name__ == '__main__':
@@ -614,7 +606,7 @@ if __name__ == '__main__':
         display = Display(city_name, time_zone, path)
 
         enable_display = False
-        display.disable()
+        display.disable(True)
         time_display_enable = 0
         now1 = time.time()
         while True:
@@ -639,7 +631,7 @@ if __name__ == '__main__':
                     data = ec.collect_all_data()
                     mc.insert_one(data)
                     # print(enable_display, now1, time_display_enable, display_on_duration)
-                    if enable_display and now1 < (time_display_enable + display_on_duration):
+                    if enable_display:
                         logging.debug("update display")
                         display.update_display(data)
                 except pymongo.errors.ServerSelectionTimeoutError():
@@ -648,7 +640,6 @@ if __name__ == '__main__':
                     logging.warning("Can't update display {}".format(e))
 
             time.sleep(max(0.0, 1.0 - (time.time() - now)))
-            if DEBUG:
-                logging.info('Sensor data: {}'.format(ec.collect_all_data()))
+            # logging.debug('Sensor data: {}'.format(ec.collect_all_data()))
     except KeyboardInterrupt:
         display.disable()
