@@ -581,6 +581,7 @@ if __name__ == '__main__':
         show_display = False
 
         if args.debug:
+            logging.getLogger().setLevel(logging.DEBUG)
             DEBUG = True
 
         if args.timezone:
@@ -623,13 +624,12 @@ if __name__ == '__main__':
                 logging.debug("Enabling display")
                 enable_display = True
                 time_display_enable = now
+                data = ec.collect_all_data()
+                display.update_display(data)
 
             now2 = now - now1
             remaining_time = args.timeout - now2
-            if not enable_display and now1 < (time_display_enable + display_on_duration):
-                logging.debug("update display")
-                display.update_display(data)
-            elif enable_display:
+            if enable_display and now > (time_display_enable + display_on_duration):
                 logging.debug("resetting display")
                 enable_display = False
                 display.disable()
