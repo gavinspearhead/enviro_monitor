@@ -556,7 +556,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-C", '--city', metavar="CITY", type=str, help="City")
     parser.add_argument("-D", '--display', metavar="DISPLAY", type=str_to_bool, help="Show the display")
-    parser.add_argument("-d", '--display_on_duration', metavar="DISPLAY_ON_DURATION", type=int, default=30,
+    parser.add_argument("-O", '--display_on_duration', metavar="DISPLAY_ON_DURATION", type=int, default=30,
                         help="How long to show the dislay")
     parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1500,
                         help="The value indicating the proximity to turn on teh dislay")
@@ -641,6 +641,6 @@ if __name__ == '__main__':
             except Exception as e:
                 logging.warning("Can't update display {}".format(e))
 
-        time.sleep(1.0 - (time.time() - now))
+        time.sleep(max(0, 1.0 - (time.time() - now)))
         if DEBUG:
             logging.info('Sensor data: {}'.format(ec.collect_all_data()))
