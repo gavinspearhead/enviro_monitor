@@ -559,7 +559,7 @@ if __name__ == '__main__':
         parser.add_argument("-C", '--city', metavar="CITY", type=str, help="City")
         parser.add_argument("-D", '--display', metavar="DISPLAY", type=str_to_bool, help="Show the display")
         parser.add_argument("-O", '--display_on_duration', metavar="DISPLAY_ON_DURATION", type=int, default=30,
-                            help="How long to show the dislay")
+                            help="How long to show the display")
         parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1500,
                             help="The value indicating the proximity to turn on teh dislay")
         parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
@@ -613,6 +613,7 @@ if __name__ == '__main__':
         display = Display(city_name, time_zone, path)
 
         enable_display = False
+        display.disable()
         time_display_enable = 0
         now1 = time.time()
         while True:
@@ -625,10 +626,9 @@ if __name__ == '__main__':
 
             now2 = now - now1
             remaining_time = args.timeout - now2
-            if enable_display and now1 < (time_display_enable + display_on_duration):
+            if not enable_display and now1 < (time_display_enable + display_on_duration):
                 logging.debug("update display")
                 display.update_display(data)
-                enable_display = True
             elif enable_display:
                 logging.debug("resetting display")
                 enable_display = False
