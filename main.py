@@ -152,10 +152,10 @@ def sun_moon_time(city, time_zone):
 class EnviroCollector:
     def __init__(self, size=5):
         bus = SMBus(1)
+        self.last_prox = 0
         self._bme280 = BME280(i2c_dev=bus)
         self._pms5003 = PMS5003()
         self._noise = Noise()
-
         self.temperature = fifo(size)
         self.pressure = fifo(size)
         self.humidity = fifo(size)
@@ -237,7 +237,7 @@ class EnviroCollector:
         try:
             _lux = ltr559.get_lux()
             _prox = ltr559.get_proximity()
-
+            self.last_prox = _prox
             self.lux.add(_lux)
             self.proximity.add(_prox)
         except IOError:
@@ -299,6 +299,9 @@ class EnviroCollector:
         self.get_gas()
         self.get_noise()
         self.get_particulates()
+
+    def get_last_prox(self):
+        return self.last_prox
 
 
 class Display:
@@ -518,6 +521,9 @@ class Display:
                                 align_right=True, rectangle=True)
         self._disp.display(img)
 
+    def disable(self):
+        self._disp.reset()
+
 
 #
 # def get_serial_number():
@@ -583,19 +589,28 @@ if __name__ == '__main__':
     mc = MongoConnector(config).get_collection()
     ec = EnviroCollector(timeout * 2)
     now1 = time.time()
-
+    prox_threshold = 1000
+    display_on_duration = 30
     display = Display(city_name, time_zone, path)
-
+    enable_display = False
+    time_display_enable = 0
     while True:
         ec.update_all()
         now2 = time.time() - now1
+        if show_display and ec.get_last_prox() > prox_threshold and not enable_display :
+            enable_display = True
+            time_display_enable = now2
+            
         remaining_time = args.timeout - now2
         if remaining_time <= 0:
             try:
                 now1 = time.time()
                 data = ec.collect_all_data()
                 mc.insert_one(data)
-                display.update_display(data)
+                if enable_display and now1 < (time_display_enable + display_on_duration):
+                    display.update_display(data)
+                else:
+                    display.disable()
             except pymongo.errors.ServerSelectionTimeoutError():
                 logging.error("Can't connect to Mongo - drop reading")
             except Exception as e:

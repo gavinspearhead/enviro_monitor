@@ -5,7 +5,7 @@ var g_search = '';
 var max_datapoints = 120;
 
 //var colours = ['#e0b296', '#78cdc8', '#2e2e9e'];
-var colours = [ '#76091b', '#c78200', '#2f6473'];
+var colours = [ '#A2383B', '#c78200', '#2f6473'];
 
 function get_period(){
 
