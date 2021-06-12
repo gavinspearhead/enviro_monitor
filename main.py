@@ -331,6 +331,7 @@ class Display:
         self._time_values = []
         self._trend = "-"
         self.start_time = time.time()
+        self._backlight = False
 
     @staticmethod
     def describe_pressure(pressure):
@@ -471,6 +472,9 @@ class Display:
         return composite
 
     def update_display(self, data_set):
+        if not self._backlight:
+            self._disp.set_backlight(1)
+            self._backlight = True
         progress, period, day, local_dt = sun_moon_time(self._city, self._timezone)
         time_string = local_dt.strftime("%H:%M")
         date_string = local_dt.strftime("%d %b %y").lstrip('0')
@@ -527,6 +531,8 @@ class Display:
         background = 0, 0, 0
         img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=background)
         self._disp.display(img)
+        self._backlight = False
+        self._disp.backlight(0)
         # self._disp.reset()
 
 
@@ -620,6 +626,7 @@ if __name__ == '__main__':
                     display.update_display(data)
                 else:
                     logging.info("resetting display")
+                    enable_display = False
                     display.disable()
             except pymongo.errors.ServerSelectionTimeoutError():
                 logging.error("Can't connect to Mongo - drop reading")
