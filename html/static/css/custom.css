@@ -127,7 +127,7 @@ div.float-right {
 }
 
 input, textarea, select {
-    color: white !important;
+    color: black !important;
 }
 
 td {
@@ -139,7 +139,7 @@ td {
 }
 
 .hidden {
-    display: none;
+   # display: none !important;
 }
 
 .invisible {

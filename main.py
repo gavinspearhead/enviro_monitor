@@ -553,7 +553,7 @@ if __name__ == '__main__':
         parser.add_argument("-O", '--display_on_duration', metavar="DISPLAY_ON_DURATION", type=int, default=30,
                             help="How long to show the display")
         parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1500,
-                            help="The value indicating the proximity to turn on teh dislay")
+                            help="The value indicating the proximity to turn on the display")
         parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
         parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
                             help="Turns on more verbose logging, showing sensor output and post responses [default: false]")

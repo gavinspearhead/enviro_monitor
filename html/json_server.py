@@ -4,10 +4,11 @@ import os
 import sys
 import traceback
 import tzlocal
+import dateutil.parser
 
 import pytz
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -16,6 +17,7 @@ from mongo_connector import MongoConnector
 
 mc = MongoConnector(config).get_collection()
 app = Flask(__name__)
+app.secret_key = 'dummy stuff!'
 
 titles = {
     "temperature": "Temperature (°C)",
@@ -25,28 +27,59 @@ titles = {
     'reducing': "Reducing Gas (CO) (kO)",
     'nh3': "Ammonia (NH3) (kO)",
     "lux": "Light (Lux)",
-    "proximity": "Proximity ",
+    "proximity": "Proximity",
     "pm": "Particles",
     "pm1": "Particles 1μm (μg/m3)",
     "pm25": "Particles 2.5μm (μg/m3)",
     "pm10": "Particles 10μm (μg/m3)",
     'noise_low': "Noise Low",
     'noise_mid': "Noise Mid",
-    'noise_high': "Noise High"
+    'noise_high': "Noise High",
+    'noise': "Noise (Combined)",
+    "particles": "Particles (Combined)"
 }
+
+
+# selected = titles.keys()
+
+
+@app.route('/update_session/', methods=['POST', 'GET'])
+def update_session():
+    selected = request.json.get('selected')
+    #print(selected)
+    tmp = {}
+    for x, v in selected.items():
+        if x in session['selected']:
+            tmp[x] = v
+    session['selected'] = tmp
+    print(session['selected'])
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/')
 def home_page():
     try:
-        return render_template("main.html")
+        if 'selected' not in session:
+            print('setting session')
+            session['selected'] = {k: 1 for k in titles.keys()}
+            session['selected']['noise_low'] = 0
+            session['selected']['noise_high'] = 0
+            session['selected']['noise_mid'] = 0
+            session['selected']['pm1'] = 0
+            session['selected']['pm25'] = 0
+            session['selected']['pm10'] = 0
+        print(session['selected'])
+        print(session)
+        return render_template("main.html", types=titles, selected=session['selected'])
     except Exception as e:
-        traceback.print_exception(e)
+        traceback.print_exc()
+        print(e)
         return json.dumps({'success': False, "message": str(e)}), 200, {'ContentType': 'application/json'}
 
 
 @app.route("/latest/", methods=['POST', 'GET'])
 def latest_data():
+    print(session)
     res = mc.find().skip(mc.find().count() - 1)
     types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
              "pm10", 'noise_low', 'noise_mid', 'noise_high']
@@ -62,29 +95,34 @@ def data_load():
              "pm10", 'noise_low', 'noise_mid', 'noise_high']
 
     orig_type = rtype = request.json.get('type', '')
-    # print(type)
     interval = request.json.get('interval', 1)
     if rtype not in types:
         raise ValueError("Invalid type {}".format(rtype))
     rtype = "${}".format(rtype)
     period = request.json.get('period', '').strip()
-    now = datetime.datetime.now(pytz.UTC)
+    end_time = datetime.datetime.now(pytz.UTC)
     if period == 'hour':
-        start_time = now - datetime.timedelta(hours=1)
+        start_time = end_time - datetime.timedelta(hours=1)
     elif period == '4hour':
-        start_time = now - datetime.timedelta(hours=4)
+        start_time = end_time - datetime.timedelta(hours=4)
     elif period == '12hour':
-        start_time = now - datetime.timedelta(hours=12)
+        start_time = end_time - datetime.timedelta(hours=12)
     elif period == 'day':
-        start_time = now - datetime.timedelta(hours=24)
+        start_time = end_time - datetime.timedelta(hours=24)
     elif period == 'week':
-        start_time = now - datetime.timedelta(hours=24 * 7)
+        start_time = end_time - datetime.timedelta(hours=24 * 7)
     elif period == 'month':
-        start_time = now - datetime.timedelta(hours=24 * 31)
+        start_time = end_time - datetime.timedelta(hours=24 * 31)
+    elif period == 'custom':
+        start_time = (dateutil.parser.isoparse(interval[0])).astimezone(pytz.UTC)
+        end_time = (dateutil.parser.isoparse(interval[1]).astimezone(pytz.UTC))
+        t_delta = end_time - start_time
+        interval = int(t_delta.total_seconds() / 25)
+        # print(t_delta.total_seconds(), start_time, end_time, interval)
     else:
         raise ValueError("Invalid period {}".format(period))
-    mask = {"$and": [{"timestamp": {"$gte": start_time}}, {"timestamp": {"$lte": now}}]}
-
+    mask = {"$and": [{"timestamp": {"$gte": start_time}}, {"timestamp": {"$lte": end_time}}]}
+    # print(mask)
     query = [
         {"$match": {'$and': [mask]}},
         {"$group": {

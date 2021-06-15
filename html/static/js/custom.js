@@ -17,6 +17,13 @@ function get_period(){
     else if ($("#hour12").is(":checked")) {period = '12hour'; interval = 60 * 15 }
     else if ($("#week").is(":checked")) {period = 'week'; interval = 60 * 15 * 7 } //  6 hours
     else if ($("#month").is(":checked")) {period = 'month'; interval = 60 * 60 * 31 } // day
+    else if ($("#custom").is(":checked")) {
+        period = 'custom';
+        from = $("#from_date").val();
+        to = $("#to_date").val();
+        return [period, [from, to] ]
+    }
+
     return [period, interval];
     }
 
@@ -25,6 +32,7 @@ function load_composite_graph(canvas_id, types, title)
     var x= get_period();
     var period = x[0];
     var interval = x[1];
+    console.log(x, period, interval);
     res_data = [];
     var options= {
         animation : false,
@@ -112,17 +120,64 @@ function load_graph(canvas_id, type)
     return false;
 }
 
+var simple_types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux" , "proximity"
+                , "pm1" , "pm25", "pm10", "noise_low", "noise_mid", "noise_high"];
+
+var composite_types = ["noise", "particles"];
+var all_types = simple_types.concat(composite_types);
+
+function update_session()
+{
+    var types = all_types;
+    var selected = {}
+    console.log(all_types);
+    for (let i = 0; i < types.length; i++) {
+        console.log("#setting_" + types[i]);
+        if ($("#setting_" + types[i])[0].checked) {
+            selected[types[i]] = 1;
+        } else  {
+            selected[types[i]] = 0;
+        }
+    }
+    console.log(selected)
+    $.ajax({
+        url: script_root + '/update_session/',
+        type: 'POST',
+        cache: false,
+        contentType: "application/json;charset=UTF-8",
+        data : JSON.stringify({'selected': selected}),
+        async : true,
+    }).done(function(data) {
+    });
+}
+
 function load_all_graphs()
 {
-    var types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux" , "proximity" ];
-//    , "pm1" , "pm25", "pm10", "noise_low", "noise_mid", "noise_high"];
+    var types = simple_types;
     for (let i = 0; i < types.length; i++) {
-        load_graph('canvas_' + types[i], types[i]);
+//        console.log($("#setting_pressure")[0].checked);
+        if ($("#setting_" + types[i])[0].checked) {
+            console.log(types[i]);
+            $('#canvas_'+ types[i]).show();
+            load_graph('canvas_' + types[i], types[i]);
+        } else {
+            $('#canvas_'+ types[i]).hide();
+        }
     }
     var composite_type = [ "pm10", "pm25", "pm1"];
-    load_composite_graph('canvas_pm', composite_type, "Particles")
+    if ($('#setting_particles')[0].checked) {
+            $("#canvas_pm").show();
+            load_composite_graph('canvas_pm', composite_type, "Particles")
+        } else {
+        $("#canvas_pm").hide();
+    }
     var composite_type = [ "noise_high", "noise_mid", "noise_low"];
-    load_composite_graph('canvas_noise', composite_type, "Noise")
+    if ($('#setting_noise')[0].checked) {
+        $("#canvas_noise").show();
+            load_composite_graph('canvas_noise', composite_type, "Noise")
+        } else {
+        $("#canvas_noise").hide();
+    }
 }
 
 function round(nr, dig)
@@ -150,15 +205,28 @@ function load_currents()
 
 
 $( document ).ready(function() {
-       
+    var display = false;
+    $('.dropdown-toggle').dropdown()
+
     add_items_lock = 0
     $('body').css('background-image', 'url("' + script_root + '/static/img/background.gif")');
     $('body').css('background-size', 'contain');
 
     $("[name^='timeperiod").click(function(event) {
+        if ($(this).attr('id') !='custom') {
+        $("#time_selector").hide();
         load_all_graphs();
+        }
     });
+    $("#custom").click(function() {  $('#timepicker').toggleClass('d-none');});
+    $("#submit_custom").click(function() {
+        load_all_graphs();
+    } );
     load_all_graphs();
     load_currents();
+    $('[name="selected"').change(function(event) {
+    console.log('click');
+        update_session();
+    })
     setInterval(load_currents, 5000);
 });

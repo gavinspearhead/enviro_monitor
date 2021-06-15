@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
 	<meta charset="utf-8">
 	<title>Enviro</title>
@@ -25,7 +25,18 @@
 <script type="text/javascript">
 </script>
 <nav class="navbar">
-            <div>
+<!--    <div class="container-fluid">-->
+    <div class="navbar-left">
+
+            <button class="btn btn-secondary dropdown-toggle" id="settings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" type="button">Settings</button>
+            <div id="settings_list" class="dropdown-menu" aria-labelledby="settings">
+            {% for t in types %}
+                <div class="dropdown-item">
+                   <input type="checkbox" name="selected" id="setting_{{t}}" {% if  t in selected and selected[t] == 1 %}checked{%endif%}>
+                    {{ types[t] }}
+                    </div>
+            {% endfor %}
+            </div>
             <input type="radio" class="btn-check" name="timeperiod" id="hour" autocomplete="off" checked>
             <label class="btn btn-secondary" for="hour">Hour</label>
 
@@ -43,13 +54,35 @@
 
             <input type="radio" class="btn-check" name="timeperiod" id="month" autocomplete="off">
             <label class="btn btn-secondary" for="month">Month</label>
+
+            <input type="radio" class="btn-check dropdown-toggle" name="timeperiod" id="custom" autocomplete="off">
+            <label class="btn btn-secondary" for="custom">Custom</label>
+
+            <div id="custom_timepicker" class="dropdown-menu" aria-labelledby="custom">
+            <div class="d-none" id="timepicker" style="margin:10px; align:right">
+            <div class="input-group input-group-sm" id="time_selector1">
+                <div class="input-group-prepend"><span class="input-group-text">From</span></div>
+                <input type="datetime-local" name="from_timestamp" id="from_date">
             </div>
+            <div class="input-group input-group-sm" id="time_selector2">
+            <div class="input-group-prepend"><span class="input-group-text">To</span></div>
+                <input type="datetime-local" name="to_timestamp" id="to_date">
+            </div><br>
+            <button class="submit_custom btn-sm btn-secondary" id="submit_custom" type="button">Submit</button>
+            </div>
+            </div>
+    </div>
+
+
 
     <div class="navbar-right">
-    <span class="badge">Temperature:</span> <span class="badge badge-primary" id="current_temperature"></span> &deg;C
-    <span class="badge">Humidity:</span> <span class="badge badge-primary" id="current_humidity"></span> %
-    <span class="badge">Pressure:</span> <span class="badge badge-primary" id="current_pressure"></span> HPa
+        <span class="badge">Temperature:</span> <span class="badge badge-primary" id="current_temperature"></span> &deg;C
+        <span class="badge">Humidity:</span> <span class="badge badge-primary" id="current_humidity"></span> %
+        <span class="badge">Pressure:</span> <span class="badge badge-primary" id="current_pressure"></span> HPa
     </div>
+<!--    </div>-->
+
+
 </nav>
 
 
@@ -79,6 +112,18 @@
                 </div>
 
                 <div class="col-auto">
+                    <canvas id="canvas_noise_high" height="400" width="500"></canvas>
+                </div>
+
+                <div class="col-auto">
+                    <canvas id="canvas_noise_low" height="400" width="500"></canvas>
+                </div>
+
+                <div class="col-auto">
+                    <canvas id="canvas_noise_mid" height="400" width="500"></canvas>
+                </div>
+
+                <div class="col-auto">
                     <canvas id="canvas_noise" height="400" width="500"></canvas>
                 </div>
 
@@ -90,7 +135,18 @@
                 </div>
                 <div class="col-auto">
                 <canvas id="canvas_pm" height="400" width="500"></canvas>
-            </div>
+                </div>
+
+                <div class="col-auto">
+                    <canvas id="canvas_pm1" height="400" width="500"></canvas>
+                </div>
+
+                <div class="col-auto">
+                    <canvas id="canvas_pm25" height="400" width="500"></canvas>
+                </div>
+                <div class="col-auto">
+                    <canvas id="canvas_pm10" height="400" width="500"></canvas>
+                </div>
                 <div class="col-sm">
                 </div>
             </div>
