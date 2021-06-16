@@ -59,16 +59,24 @@
             <label class="btn btn-secondary" for="custom">Custom</label>
 
             <div id="custom_timepicker" class="dropdown-menu" aria-labelledby="custom">
-            <div class="d-none" id="timepicker" style="margin:10px; align:right">
-            <div class="input-group input-group-sm" id="time_selector1">
+<div class="container">
+    <div class="row ">
+        <div class="col align-self-end">
+            <div class="d-none align-self-end" id="timepicker">
+            <div class="input-group input-group-sm pull-right" id="time_selector1">
                 <div class="input-group-prepend"><span class="input-group-text">From</span></div>
-                <input type="datetime-local" name="from_timestamp" id="from_date">
+                <input type="datetime-local" name="from_timestamp" id="from_date" class="pull-right">
             </div>
-            <div class="input-group input-group-sm" id="time_selector2">
+            <div class="input-group input-group-sm mr-auto pull-right  " id="time_selector2">
             <div class="input-group-prepend"><span class="input-group-text">To</span></div>
                 <input type="datetime-local" name="to_timestamp" id="to_date">
             </div><br>
-            <button class="submit_custom btn-sm btn-secondary" id="submit_custom" type="button">Submit</button>
+            <button class="submit_custom btn-sm btn-secondary " id="submit_custom" type="button">Submit</button>
+            </div>
+            </div>
+            </div>
+            </div>
+            </div>
             </div>
             </div>
     </div>

@@ -43,6 +43,7 @@ function load_composite_graph(canvas_id, types, title)
         graphTitle : title ,
         legend: true,
         datasetFill : true,
+        showXLabels: false,
     };
 
     var labels = null;
@@ -62,10 +63,11 @@ function load_composite_graph(canvas_id, types, title)
                     fillColor: colours[i],
                     strokeColor: colours[i],
                     data: res.data,
-                    title: types[i]
+                    title: types[i].replace(/_/g, " ")
                 }
             }
             console.log(res);
+            //labels = [];
             if (labels === null) {labels = res.labels;}
         });
     }
@@ -100,6 +102,7 @@ function load_graph(canvas_id, type)
             highLight: true,
             annotateLabel: "<%=v2+': '+v1+' '+v3%>",
             annotateDisplay: true,
+            showXLabels: false,
 
         };
         if (res.labels.length == 0 || res.data.length == 0) {
