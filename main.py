@@ -299,12 +299,12 @@ class EnviroCollector:
         return sensor_data
 
     def update_all(self):
-        def f1(self):
-            self.get_temperature(args.factor)
-            self.get_pressure(),
-            self.get_humidity(),
+        def _get_weather_values(_self):
+            _self.get_temperature(args.factor)
+            _self.get_humidity(),
+            _self.get_pressure(),
         tasks = [
-            lambda : f1(self),
+            lambda: _get_weather_values(self),
             lambda: self.get_light(),
             lambda: self.get_gas(),
             lambda: self.get_noise(),
@@ -347,7 +347,7 @@ class Display:
         self._trend = "-"
         self.start_time = time.time()
         self._backlight = False
-        self._black_img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=(0, 0, 0))
+        self._black_img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=(0, 0, 0, 0))
 
     @staticmethod
     def describe_pressure(pressure):
@@ -505,6 +505,7 @@ class Display:
         humidity_icon = Image.open(f"{self._path}/icons/humidity-{humidity_desc.lower()}.png")
         pressure_icon = Image.open(f"{path}/icons/weather-{pressure_desc.lower()}.png")
         time_elapsed = time.time() - self.start_time
+
         if time_elapsed > 30:
             if self._min_temp is not None and self._max_temp is not None:
                 if data_set['temperature'] < self._min_temp:
@@ -561,7 +562,7 @@ if __name__ == '__main__':
         parser.add_argument("-D", '--display', metavar="DISPLAY", type=str_to_bool, help="Show the display")
         parser.add_argument("-O", '--display_on_duration', metavar="DISPLAY_ON_DURATION", type=int, default=30,
                             help="How long to show the display")
-        parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1500,
+        parser.add_argument("-p", '--display_proximity', metavar="DISPLAY_PROXIMITY", type=int, default=1000,
                             help="The value indicating the proximity to turn on the display")
         parser.add_argument("-T", '--timezone', metavar="TIMEZONE", type=str, help="Timezone")
         parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool,
