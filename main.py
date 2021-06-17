@@ -21,7 +21,6 @@ from astral.geocoder import database, lookup
 from astral.sun import sun
 from concurrent.futures import ThreadPoolExecutor
 
-
 from fifo import fifo
 from mongo_connector import MongoConnector
 from config import config
@@ -300,17 +299,19 @@ class EnviroCollector:
         return sensor_data
 
     def update_all(self):
+        def f1(self):
+            self.get_temperature(args.factor)
+            self.get_pressure(),
+            self.get_humidity(),
         tasks = [
-            lambda: self.get_temperature(args.factor),
-            lambda: self.get_humidity(),
+            lambda : f1(self),
             lambda: self.get_light(),
             lambda: self.get_gas(),
-            lambda: self.get_pressure(),
             lambda: self.get_noise(),
             lambda: self.get_particulates(),
         ]
         with ThreadPoolExecutor() as executor:
-            running_tasks = [ executor.submit(task) for task in tasks ]
+            running_tasks = [executor.submit(task) for task in tasks]
             for running_task in running_tasks:
                 running_task.result()
 
@@ -346,7 +347,7 @@ class Display:
         self._trend = "-"
         self.start_time = time.time()
         self._backlight = False
-        self._black_img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=(0,0,0))
+        self._black_img = Image.new('RGBA', (self._WIDTH, self._HEIGHT), color=(0, 0, 0))
 
     @staticmethod
     def describe_pressure(pressure):
