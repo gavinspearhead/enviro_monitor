@@ -19,6 +19,8 @@ from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError, ChecksumMi
 from fonts.ttf import RobotoMedium as UserFont
 from astral.geocoder import database, lookup
 from astral.sun import sun
+from concurrent.futures import ThreadPoolExecutor
+
 
 from fifo import fifo
 from mongo_connector import MongoConnector
@@ -158,7 +160,7 @@ def sun_moon_time(city, time_zone):
 class EnviroCollector:
     def __init__(self, size=5):
         bus = SMBus(1)
-        self.last_proximity = 0
+        self._last_proximity = 0
         self._bme280 = BME280(i2c_dev=bus)
         self._pms5003 = PMS5003()
         self._noise = Noise()
@@ -243,7 +245,7 @@ class EnviroCollector:
         try:
             _lux = ltr559.get_lux()
             _prox = ltr559.get_proximity()
-            self.last_proximity = _prox
+            self._last_proximity = _prox
             self.lux.add(_lux)
             self.proximity.add(_prox)
         except IOError:
@@ -255,7 +257,7 @@ class EnviroCollector:
         try:
             pms_data = self._pms5003.read()
         except (pmsReadTimeoutError, SerialTimeoutError) as e:
-            logging.warning("Failed to read PMS5003 {}").format(e)
+            logging.warning("Failed to read PMS5003 {}".format(e))
             self.reset_i2c()
         except ChecksumMismatchError as e:
             logging.warning("Failed to read PMS5003 {}".format(e))
@@ -298,17 +300,23 @@ class EnviroCollector:
         return sensor_data
 
     def update_all(self):
-        self.get_temperature(args.factor)
-        self.get_pressure()
-        self.get_humidity()
-        self.get_light()
-        self.get_gas()
-        self.get_noise()
-        self.get_particulates()
+        tasks = [
+            lambda: self.get_temperature(args.factor),
+            lambda: self.get_pressure(),
+            lambda: self.get_humidity(),
+            lambda: self.get_light()
+            lambda: self.get_gas(),
+            lambda: self.get_noise(),
+            lambda: self.get_particulates(),
+        ]
+        with ThreadPoolExecutor() as executor:
+            running_tasks = [ executor.submit(task) for task in tasks ]
+            for running_task in running_tasks:
+                running_task.result()
 
     def get_last_proximity(self):
         # print(self.last_prox)
-        return self.last_proximity
+        return self._last_proximity
 
 
 class Display:
