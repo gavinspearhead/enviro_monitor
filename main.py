@@ -302,10 +302,10 @@ class EnviroCollector:
     def update_all(self):
         tasks = [
             lambda: self.get_temperature(args.factor),
-            lambda: self.get_pressure(),
             lambda: self.get_humidity(),
             lambda: self.get_light(),
             lambda: self.get_gas(),
+            lambda: self.get_pressure(),
             lambda: self.get_noise(),
             lambda: self.get_particulates(),
         ]
