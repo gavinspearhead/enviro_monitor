@@ -228,7 +228,6 @@ $( document ).ready(function() {
     load_all_graphs();
     load_currents();
     $('[name="selected"').change(function(event) {
-    console.log('click');
         update_session();
     })
     setInterval(load_currents, 5000);

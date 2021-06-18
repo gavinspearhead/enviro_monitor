@@ -196,19 +196,23 @@ class EnviroCollector:
         """Get temperature from the weather sensor"""
         # Tuning factor for compensation. Decrease this number to adjust the
         # temperature down, and increase to adjust up
-        raw_temp = self._bme280.get_temperature()
+        try:
+            raw_temp = self._bme280.get_temperature()
 
-        if factor:
-            cpu_temps = [self.get_cpu_temperature()] * 5
-            cpu_temp = self.get_cpu_temperature()
-            # Smooth out with some averaging to decrease jitter
-            cpu_temps = cpu_temps[1:] + [cpu_temp]
-            avg_cpu_temp = sum(cpu_temps) / float(len(cpu_temps))
-            _temperature = raw_temp - ((avg_cpu_temp - raw_temp) / factor)
-        else:
-            _temperature = raw_temp
+            if factor:
+                cpu_temps = [self.get_cpu_temperature()] * 5
+                cpu_temp = self.get_cpu_temperature()
+                # Smooth out with some averaging to decrease jitter
+                cpu_temps = cpu_temps[1:] + [cpu_temp]
+                avg_cpu_temp = sum(cpu_temps) / float(len(cpu_temps))
+                _temperature = raw_temp - ((avg_cpu_temp - raw_temp) / factor)
+            else:
+                _temperature = raw_temp
 
-        self.temperature.add(_temperature)  # Set to a given value
+            self.temperature.add(_temperature)  # Set to a given value
+        except IOError:
+            logging.error("Could not get pressure readings. Resetting i2c.")
+            self.reset_i2c()
 
     def get_pressure(self):
         """Get pressure from the weather sensor"""
@@ -299,24 +303,15 @@ class EnviroCollector:
         return sensor_data
 
     def update_all(self):
-        def _get_weather_values(_self):
-            _self.get_temperature(args.factor)
-            _self.get_humidity(),
-            _self.get_pressure(),
-        tasks = [
-            lambda: _get_weather_values(self),
-            lambda: self.get_light(),
-            lambda: self.get_gas(),
-            lambda: self.get_noise(),
-            lambda: self.get_particulates(),
-        ]
-        with ThreadPoolExecutor() as executor:
-            running_tasks = [executor.submit(task) for task in tasks]
-            for running_task in running_tasks:
-                running_task.result()
+        self.get_temperature(args.factor)
+        self.get_humidity(),
+        self.get_pressure(),
+        self.get_light(),
+        self.get_gas(),
+        self.get_noise(),
+        self.get_particulates(),
 
     def get_last_proximity(self):
-        # print(self.last_prox)
         return self._last_proximity
 
 

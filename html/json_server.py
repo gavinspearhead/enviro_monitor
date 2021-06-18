@@ -40,19 +40,14 @@ titles = {
 }
 
 
-# selected = titles.keys()
-
-
 @app.route('/update_session/', methods=['POST', 'GET'])
 def update_session():
     selected = request.json.get('selected')
-    #print(selected)
     tmp = {}
     for x, v in selected.items():
         if x in session['selected']:
             tmp[x] = v
     session['selected'] = tmp
-    print(session['selected'])
     return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
@@ -60,7 +55,6 @@ def update_session():
 def home_page():
     try:
         if 'selected' not in session:
-            print('setting session')
             session['selected'] = {k: 1 for k in titles.keys()}
             session['selected']['noise_low'] = 0
             session['selected']['noise_high'] = 0
@@ -68,18 +62,14 @@ def home_page():
             session['selected']['pm1'] = 0
             session['selected']['pm25'] = 0
             session['selected']['pm10'] = 0
-        print(session['selected'])
-        print(session)
         return render_template("main.html", types=titles, selected=session['selected'])
     except Exception as e:
         traceback.print_exc()
-        print(e)
         return json.dumps({'success': False, "message": str(e)}), 200, {'ContentType': 'application/json'}
 
 
 @app.route("/latest/", methods=['POST', 'GET'])
 def latest_data():
-    print(session)
     res = mc.find().skip(mc.find().count() - 1)
     types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
              "pm10", 'noise_low', 'noise_mid', 'noise_high']
@@ -118,11 +108,9 @@ def data_load():
         end_time = (dateutil.parser.isoparse(interval[1]).astimezone(pytz.UTC))
         t_delta = end_time - start_time
         interval = int(t_delta.total_seconds() / 25)
-        # print(t_delta.total_seconds(), start_time, end_time, interval)
     else:
         raise ValueError("Invalid period {}".format(period))
     mask = {"$and": [{"timestamp": {"$gte": start_time}}, {"timestamp": {"$lte": end_time}}]}
-    # print(mask)
     query = [
         {"$match": {'$and': [mask]}},
         {"$group": {
@@ -144,9 +132,6 @@ def data_load():
     ]
 
     res = mc.aggregate(query)
-    # print(query)
-    # print('foo')
-    # print(res)
 
     data = []
     labels = []
@@ -154,20 +139,14 @@ def data_load():
     if interval > 3600:
         t_format = "%Y-%m-%d %H:%M"
 
-    # print(rtype)
     for x in res:
-        # print(x)
-        # print(x['time'].replace(tzinfo=pytz.UTC))
         t = x['time'].replace(tzinfo=pytz.UTC).astimezone(tzlocal.get_localzone())
         ts = t.strftime(t_format)
-        # labels.append(x['_id'] / (1000 * interval))
         if x['avg'] is not None:
             labels.append(ts)
             data.append(round(x['avg'], 2))
 
-    # print(rtype, len(data))
     title = titles[orig_type] if orig_type in titles else ""
-    # print(rtype, title)
     return json.dumps({"data": data, "labels": labels, "title": title})
 
 
@@ -200,7 +179,6 @@ def all_data(name='', count=1):
             except KeyError:
                 row = {}
         data.append(row)
-    # print(data)
     return json.dumps(data)
 
 
