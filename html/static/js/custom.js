@@ -207,9 +207,37 @@ function load_currents()
 }
 
 
+function load_details(type)
+{
+var avg = 0;
+var mx = 0;
+var mn = 0;
+var std = 0
+var period = get_period()[0]
+
+ $.ajax({
+        url: script_root + '/details/',
+        type: 'POST',
+        cache: false,
+        async: false,
+        data:  JSON.stringify({'type': type,  'period': period, 'interval': 1}),
+        contentType: "application/json;charset=UTF-8",
+
+    }).done(function(data) {
+        var res = JSON.parse(data);
+        console.log(res.data.avg);
+        avg = round(res.data.avg, 2);
+        mn = round(res.data.min, 2);
+        mx = round(res.data.max, 2);
+        std = round(res.data.std, 2);
+    });
+        return "Avg: " + avg + "<br>Min: " + mn + "<br>Max: " + mx + "<br>Std Dev: " + std  ;
+}
+
 $( document ).ready(function() {
     var display = false;
     $('.dropdown-toggle').dropdown()
+     $('[data-toggle="popover"]').popover();
 
     add_items_lock = 0
     $('body').css('background-image', 'url("' + script_root + '/static/img/background.gif")');
@@ -227,8 +255,31 @@ $( document ).ready(function() {
     } );
     load_all_graphs();
     load_currents();
+
+//    load_details();
     $('[name="selected"').change(function(event) {
         update_session();
-    })
+    });
+    $("#pressure_details").click(function(event) {
+//        text = load_details('pressure');
+//        console.log(text);
+//        $("#pressure_details").popover('destroy');
+        $("#pressure_details").popover( {trigger: 'manual', content: function() {return load_details('pressure');}, html: true}).popover("show");
+        setTimeout(function(){ $("#pressure_details").popover("hide");}, 5000)
+    });
+    $("#temperature_details").click(function(event) {
+//        text = load_details('temperature');
+        //console.log(text);
+//       $("#temperature_details").popover('destroy');
+        $("#temperature_details").popover( {trigger: 'manual', content: function() {return load_details('temperature');}, html: true}).popover("show");
+        setTimeout(function(){ $("#temperature_details").popover("hide");}, 5000)
+    });
+    $("#humidity_details").click(function(event) {
+//        text = load_details('humidity');
+//        console.log(text);
+//        ("#humidity_details").popover('destroy');
+        $("#humidity_details").popover( {trigger: 'manual', content:function() {return load_details('humidity');}, html: true}).popover("show");
+        setTimeout(function(){ $("#humidity_details").popover("hide");}, 5000)
+    });
     setInterval(load_currents, 5000);
 });

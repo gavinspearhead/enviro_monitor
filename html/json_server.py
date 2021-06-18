@@ -19,6 +19,9 @@ mc = MongoConnector(config).get_collection()
 app = Flask(__name__)
 app.secret_key = 'dummy stuff!'
 
+types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
+         "pm10", 'noise_low', 'noise_mid', 'noise_high']
+
 titles = {
     "temperature": "Temperature (°C)",
     'humidity': "Humidity (%)",
@@ -71,25 +74,13 @@ def home_page():
 @app.route("/latest/", methods=['POST', 'GET'])
 def latest_data():
     res = mc.find().skip(mc.find().count() - 1)
-    types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
-             "pm10", 'noise_low', 'noise_mid', 'noise_high']
     data = dict()
     for i in types:
         data[i] = res[0][i]
     return json.dumps({"data": data})
 
 
-@app.route("/data/", methods=["POST", "GET"])
-def data_load():
-    types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
-             "pm10", 'noise_low', 'noise_mid', 'noise_high']
-
-    orig_type = rtype = request.json.get('type', '')
-    interval = request.json.get('interval', 1)
-    if rtype not in types:
-        raise ValueError("Invalid type {}".format(rtype))
-    rtype = "${}".format(rtype)
-    period = request.json.get('period', '').strip()
+def get_periods(interval, period):
     end_time = datetime.datetime.now(pytz.UTC)
     if period == 'hour':
         start_time = end_time - datetime.timedelta(hours=1)
@@ -110,6 +101,48 @@ def data_load():
         interval = int(t_delta.total_seconds() / 25)
     else:
         raise ValueError("Invalid period {}".format(period))
+    return start_time, end_time, interval
+
+
+@app.route("/details/", methods=["POST", "GET"])
+def get_details():
+    orig_type = rtype = request.json.get('type', '')
+    interval = request.json.get('interval', 1)
+    if rtype not in types:
+        raise ValueError("Invalid type {}".format(rtype))
+    rtype = "${}".format(rtype)
+    period = request.json.get('period', '').strip()
+    start_time, end_time, interval = get_periods(interval, period)
+    mask = {"$and": [{"timestamp": {"$gte": start_time}}, {"timestamp": {"$lte": end_time}}]}
+    query = [
+        {"$match": {'$and': [mask]}},
+        {"$group": {
+            "_id": None,
+            "max": {"$max": rtype},
+            "min": {"$min": rtype},
+            "avg": {"$avg": rtype},
+            "std": {"$stdDevPop": rtype},
+        }
+        }
+    ]
+    res = mc.aggregate(query)
+    data = []
+    for x in res:
+        data = x
+        break
+    return json.dumps({"data": data})
+
+
+@app.route("/data/", methods=["POST", "GET"])
+def data_load():
+    orig_type = rtype = request.json.get('type', '')
+    interval = request.json.get('interval', 1)
+    if rtype not in types:
+        raise ValueError("Invalid type {}".format(rtype))
+    rtype = "${}".format(rtype)
+    period = request.json.get('period', '').strip()
+    start_time, end_time, interval = get_periods(interval, period)
+
     mask = {"$and": [{"timestamp": {"$gte": start_time}}, {"timestamp": {"$lte": end_time}}]}
     query = [
         {"$match": {'$and': [mask]}},

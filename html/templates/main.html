@@ -10,7 +10,7 @@
 	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/popper.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/ChartNew.js') }}"></script>
 
 <style> {# included here because relative path #}
@@ -78,25 +78,20 @@
             </div>
             </div>
             </div>
-            </div>
-    </div>
-
-
 
     <div class="navbar-right">
-        <span class="badge">Temperature:</span> <span class="badge badge-primary" id="current_temperature"></span> &deg;C
-        <span class="badge">Humidity:</span> <span class="badge badge-primary" id="current_humidity"></span> %
-        <span class="badge">Pressure:</span> <span class="badge badge-primary" id="current_pressure"></span> HPa
+        <span class="badge" id="temperature_details">Temperature:</span> <span class="badge badge-primary" id="current_temperature"></span> &deg;C
+        <span class="badge" id="humidity_details">Humidity:</span> <span class="badge badge-primary" id="current_humidity"></span> %
+        <span class="badge" id="pressure_details">Pressure:</span> <span class="badge badge-primary" id="current_pressure"></span> HPa
     </div>
-<!--    </div>-->
 
+<!--    </div>-->
 
 </nav>
 
 
 <div id="maindiv" class="container-fluid max-height scrollable">
   <br>
-
     <div class="row ">
             <h2 id="title"></h2>
             <div class="row">
