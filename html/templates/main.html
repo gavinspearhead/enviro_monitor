@@ -37,6 +37,9 @@
                     </div>
             {% endfor %}
             </div>
+<!--            <button class="btn btn-secondary" name="shrink" id="shrink">-</button>-->
+<!--            <button class="btn btn-secondary" name="enlarge" id="enlarge">+</button>-->
+
             <input type="radio" class="btn-check" name="timeperiod" id="hour" autocomplete="off" checked>
             <label class="btn btn-secondary" for="hour">Hour</label>
 
@@ -79,10 +82,14 @@
             </div>
             </div>
 
+
     <div class="navbar-right">
         <span class="badge" id="temperature_details">Temperature:</span> <span class="badge badge-primary" id="current_temperature"></span> &deg;C
         <span class="badge" id="humidity_details">Humidity:</span> <span class="badge badge-primary" id="current_humidity"></span> %
         <span class="badge" id="pressure_details">Pressure:</span> <span class="badge badge-primary" id="current_pressure"></span> HPa
+        <br>
+        <span class="badge" id="sunrise">Sunrise: </span> <span class="badge badge-primary" id="next_sunrise"></span>
+        <span class="badge" id="sunset">Sunset: </span> <span class="badge badge-primary" id="next_sunset"></span>
     </div>
 
 <!--    </div>-->
@@ -91,91 +98,42 @@
 
 
 <div id="maindiv" class="container-fluid max-height scrollable">
-  <br>
-    <div class="row ">
-            <h2 id="title"></h2>
-            <div class="row">
-                <div class="col-auto">
-                <canvas id="canvas_temperature" height="400" width="500"></canvas>
+<!--  <br>-->
+    <div class="row no-gutters">
+<!--            <h2 id="title"></h2>-->
+<!--            <div class="row no-gutters">-->
+                {% for x in keys %}
+                <div class="col-md-auto" id="canvas_div_{{x}}">
+                <canvas id="canvas_{{x}}" height="480" width="640"></canvas>
                 </div>
-                <div class="col-auto">
-                    <canvas id="canvas_humidity" height="400" width="500"></canvas>
-                </div>
-                <div class="col-auto">
-                    <canvas id="canvas_pressure" height="400" width="500"></canvas>
-                </div>
-                <div class="col-auto">
-                    <canvas id="canvas_reducing" height="400" width="500"></canvas>
-                </div>
-                <div class="col-auto">
-                    <canvas id="canvas_oxidising" height="400" width="500"></canvas>
-                </div>
-                <div class="col-auto">
-                    <canvas id="canvas_nh3" height="400" width="500"></canvas>
-                </div>
+                {% endfor %}
 
-                <div class="col-auto">
-                    <canvas id="canvas_noise_high" height="400" width="500"></canvas>
-                </div>
-
-                <div class="col-auto">
-                    <canvas id="canvas_noise_low" height="400" width="500"></canvas>
-                </div>
-
-                <div class="col-auto">
-                    <canvas id="canvas_noise_mid" height="400" width="500"></canvas>
-                </div>
-
-                <div class="col-auto">
-                    <canvas id="canvas_noise" height="400" width="500"></canvas>
-                </div>
-
-                <div class="col-auto">
-                    <canvas id="canvas_lux" height="400" width="500"></canvas>
-                </div>
-                <div class="col-auto">
-                    <canvas id="canvas_proximity" height="400" width="500"></canvas>
-                </div>
-                <div class="col-auto">
-                <canvas id="canvas_pm" height="400" width="500"></canvas>
-                </div>
-
-                <div class="col-auto">
-                    <canvas id="canvas_pm1" height="400" width="500"></canvas>
-                </div>
-
-                <div class="col-auto">
-                    <canvas id="canvas_pm25" height="400" width="500"></canvas>
-                </div>
-                <div class="col-auto">
-                    <canvas id="canvas_pm10" height="400" width="500"></canvas>
-                </div>
-                <div class="col-sm">
-                </div>
-            </div>
+<!--                <div class="col-md-auto">-->
+<!--                </div>-->
+<!--            </div>-->
 
 
         </div>
     </div>
 
-<br>
-<div id="alert_success_bar" class="hidden alert_bar alert_outer">
-    <div class="alert alert-success alert-dismissable fade show" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        <span id="alert_success_text"></span>
-    </div>
-</div>
+<!--<br>-->
+<!--<div id="alert_success_bar" class="hidden alert_bar alert_outer">-->
+<!--    <div class="alert alert-success alert-dismissable fade show" role="alert">-->
+<!--        <button type="button" class="close" data-dismiss="alert" aria-label="Close">-->
+<!--            <span aria-hidden="true">&times;</span>-->
+<!--        </button>-->
+<!--        <span id="alert_success_text"></span>-->
+<!--    </div>-->
+<!--</div>-->
 
-<div id="alert_error_bar" class="hidden alert_bar alert_outer" >
-    <div class="alert alert-danger alert-dismissable fade show" role="alert">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        <span id="alert_error_text"></span>
-    </div>
-</div>
+<!--<div id="alert_error_bar" class="hidden alert_bar alert_outer" >-->
+<!--    <div class="alert alert-danger alert-dismissable fade show" role="alert">-->
+<!--        <button type="button" class="close" data-dismiss="alert" aria-label="Close">-->
+<!--            <span aria-hidden="true">&times;</span>-->
+<!--        </button>-->
+<!--        <span id="alert_error_text"></span>-->
+<!--    </div>-->
+<!--</div>-->
 
 <script>
 var script_root = '{{ request.script_root }}';

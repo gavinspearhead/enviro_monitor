@@ -35,8 +35,13 @@ function load_composite_graph(canvas_id, types, title)
     console.log(x, period, interval);
     res_data = [];
     var options= {
+        graphTitleFontSize: 16,
+        canvasBorders: true,
+        canvasBordersWidth: 1,
+        barDatasetSpacing: 0,
+        barValueSpacing:0,
         animation : false,
-        responsive: false,
+        responsive: true,
         highLight: true,
         annotateLabel: "<%=v2+': '+v1+' '+v3%>",
         annotateDisplay: true,
@@ -97,8 +102,13 @@ function load_graph(canvas_id, type)
         console.log(res.title);
         var options= {
             graphTitle: res.title,
+            graphTitleFontSize: 16,
+            canvasBorders: true,
+            canvasBordersWidth: 1,
+            barDatasetSpacing: 0,
+            barValueSpacing:0,
             animation : false,
-            responsive: false,
+            responsive: true,
             highLight: true,
             annotateLabel: "<%=v2+': '+v1+' '+v3%>",
             annotateDisplay: true,
@@ -161,18 +171,18 @@ function load_all_graphs()
 //        console.log($("#setting_pressure")[0].checked);
         if ($("#setting_" + types[i])[0].checked) {
             console.log(types[i]);
-            $('#canvas_'+ types[i]).show();
+            $('#canvas_div_'+ types[i]).show();
             load_graph('canvas_' + types[i], types[i]);
         } else {
-            $('#canvas_'+ types[i]).hide();
+            $('#canvas_div_'+ types[i]).hide();
         }
     }
     var composite_type = [ "pm10", "pm25", "pm1"];
     if ($('#setting_particles')[0].checked) {
-            $("#canvas_pm").show();
-            load_composite_graph('canvas_pm', composite_type, "Particles")
+            $("#canvas_particles").show();
+            load_composite_graph('canvas_particles', composite_type, "Particles")
         } else {
-        $("#canvas_pm").hide();
+        $("#canvas_particles").hide();
     }
     var composite_type = [ "noise_high", "noise_mid", "noise_low"];
     if ($('#setting_noise')[0].checked) {
@@ -206,6 +216,25 @@ function load_currents()
     });
 }
 
+function load_sun_times()
+{
+    $.ajax({
+        url: script_root + '/sun/',
+        type: 'POST',
+        cache: false,
+        contentType: "application/json;charset=UTF-8",
+
+    }).done(function(data) {
+        var res = JSON.parse(data);
+        console.log(res);
+        $("#next_sunrise").text(res.sun_up);
+        $("#next_sunset").text(res.sun_down);
+
+    });
+
+}
+
+
 
 function load_details(type)
 {
@@ -230,8 +259,10 @@ var period = get_period()[0]
         mn = round(res.data.min, 2);
         mx = round(res.data.max, 2);
         std = round(res.data.std, 2);
+        ch = round(res.data.change_per_hour, 2);
+        trend = res.data.trend;
     });
-        return "Avg: " + avg + "<br>Min: " + mn + "<br>Max: " + mx + "<br>Std Dev: " + std  ;
+        return "Avg: " + avg + "<br>Min: " + mn + "<br>Max: " + mx + "<br>Std Dev: " + std  + "<br>Change: " + ch + " " + trend;
 }
 
 $( document ).ready(function() {
@@ -252,34 +283,28 @@ $( document ).ready(function() {
     $("#custom").click(function() {  $('#timepicker').toggleClass('d-none');});
     $("#submit_custom").click(function() {
         load_all_graphs();
-    } );
+    });
     load_all_graphs();
     load_currents();
 
-//    load_details();
     $('[name="selected"').change(function(event) {
         update_session();
     });
     $("#pressure_details").click(function(event) {
-//        text = load_details('pressure');
-//        console.log(text);
-//        $("#pressure_details").popover('destroy');
         $("#pressure_details").popover( {trigger: 'manual', content: function() {return load_details('pressure');}, html: true}).popover("show");
         setTimeout(function(){ $("#pressure_details").popover("hide");}, 5000)
     });
     $("#temperature_details").click(function(event) {
-//        text = load_details('temperature');
-        //console.log(text);
-//       $("#temperature_details").popover('destroy');
         $("#temperature_details").popover( {trigger: 'manual', content: function() {return load_details('temperature');}, html: true}).popover("show");
         setTimeout(function(){ $("#temperature_details").popover("hide");}, 5000)
     });
     $("#humidity_details").click(function(event) {
-//        text = load_details('humidity');
-//        console.log(text);
-//        ("#humidity_details").popover('destroy');
         $("#humidity_details").popover( {trigger: 'manual', content:function() {return load_details('humidity');}, html: true}).popover("show");
         setTimeout(function(){ $("#humidity_details").popover("hide");}, 5000)
     });
+
+    load_sun_times();
     setInterval(load_currents, 5000);
+    setInterval(load_sun_times, 1000 * 60 * 60);
 });
+
