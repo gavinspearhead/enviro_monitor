@@ -2,6 +2,6 @@
 
 import sys
 sys.stdout = sys.stderr
-sys.path.insert(0, '/opt/log_analyser/html')
+sys.path.insert(0, '/opt/enviro-monitor/html')
 
 from enviro import app as application
