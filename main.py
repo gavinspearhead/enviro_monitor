@@ -8,7 +8,7 @@ import numpy
 import colorsys
 import datetime
 import pytz
-import pymongo
+import pymongo, pymongo.errors
 import ST7735
 
 from enviroplus.noise import Noise

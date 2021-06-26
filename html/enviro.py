@@ -23,6 +23,12 @@ mc = MongoConnector(config).get_collection()
 app = Flask(__name__)
 app.secret_key = 'dummy stuff!'
 
+"""
+ The reducing and NH3 resistance readings will drop with increasing concentrations of the gases that they detect,
+ and the oxidising sensor will increase with increasing levels of nitrogen dioxide
+"""
+
+
 types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
          "pm10", 'noise_low', 'noise_mid', 'noise_high']
 titles = {
