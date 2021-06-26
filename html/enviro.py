@@ -161,7 +161,8 @@ def describe_type(type, value):
 
 @app.route("/latest/", methods=['POST', 'GET'])
 def latest_data():
-    res = mc.find().skip(mc.count_documents({}) - 1)
+    # res = mc.find().skip(mc.count_documents({}) - 1)
+    res = mc.find().limit(1).sort("$natural", -1)
     data = dict()
     descriptions = dict()
     unit_list = dict()
