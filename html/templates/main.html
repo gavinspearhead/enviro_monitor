@@ -18,6 +18,8 @@
     font-family: "My Custom Font";
     src: url("{{ request.script_root }}/static/fonts/fontawesome-webfont.ttf") format("truetype");
 }
+
+
 </style>
 </head>
 
@@ -84,9 +86,17 @@
 
 
     <div class="navbar-right">
-        <span class="badge" id="temperature_details">Temperature:</span> <span class="badge badge-primary" id="current_temperature"></span> &deg;C
-        <span class="badge" id="humidity_details">Humidity:</span> <span class="badge badge-primary" id="current_humidity"></span> %
-        <span class="badge" id="pressure_details">Pressure:</span> <span class="badge badge-primary" id="current_pressure"></span> HPa
+        <span class="badge" id="temperature_details">Temperature:</span>
+        <span class="badge badge-primary" id="current_temperature"></span>
+        <img width="28" height="28" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII" id="temperature_icon">
+
+        <span class="badge" id="humidity_details">Humidity:</span>
+        <span class="badge badge-primary" id="current_humidity"></span>
+        <img width="28" height="28" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII" id="humidity_icon">
+
+        <span class="badge" id="pressure_details">Pressure:</span>
+        <span class="badge badge-primary" id="current_pressure"></span>
+        <img width="28" height="28" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII" id="pressure_icon">
         <br>
         <span class="badge" id="sunrise">Sunrise: </span> <span class="badge badge-primary" id="next_sunrise"></span>
         <span class="badge" id="sunset">Sunset: </span> <span class="badge badge-primary" id="next_sunset"></span>
@@ -137,6 +147,7 @@
 
 <script>
 var script_root = '{{ request.script_root }}';
+var img_path = "{{ url_for('static', filename='img/') }}";
 </script>
 
 <script type="text/javascript" src="{{ url_for('static', filename='js/custom.js') }}"></script>

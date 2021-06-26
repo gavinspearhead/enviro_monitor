@@ -25,24 +25,42 @@ app.secret_key = 'dummy stuff!'
 
 types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
          "pm10", 'noise_low', 'noise_mid', 'noise_high']
-
 titles = {
-    "temperature": "Temperature (°C)",
-    'humidity': "Humidity (%)",
-    'pressure': "Pressure (HPa)",
-    'oxidising': "Oxidising Gas (Nitrogen) (kO)",
-    'reducing': "Reducing Gas (CO) (kO)",
-    'nh3': "Ammonia (NH3) (kO)",
-    "lux": "Light (Lux)",
+    "temperature": "Temperature",
+    'humidity': "Humidity",
+    'pressure': "Pressure",
+    'oxidising': "Oxidising Gas (Nitrogen)",
+    'reducing': "Reducing Gas (CO)",
+    'nh3': "Ammonia (NH3)",
+    "lux": "Light",
     "proximity": "Proximity",
-    "pm1": "Particles 1μm (μg/m3)",
-    "pm25": "Particles 2.5μm (μg/m3)",
-    "pm10": "Particles 10μm (μg/m3)",
+    "pm1": "Particles 1μm",
+    "pm25": "Particles 2.5μm",
+    "pm10": "Particles 10μm",
     'noise_low': "Noise Low",
     'noise_mid': "Noise Mid",
     'noise_high': "Noise High",
     'noise': "Noise (Combined)",
     "particles": "Particles (Combined)"
+}
+
+units = {
+    "temperature": "°C",
+    'humidity': "%",
+    'pressure': "HPa",
+    'oxidising': "kO",
+    'reducing': "kO",
+    'nh3': "kO",
+    "lux": "Lux",
+    "proximity": "Proximity",
+    "pm1": "μg/m3",
+    "pm25": "μg/m3",
+    "pm10": "μg/m3",
+    'noise_low': "",
+    'noise_mid': "",
+    'noise_high': '',
+    'noise': "",
+    "particles": "μg/m3"
 }
 
 city = "Amsterdam"
@@ -77,13 +95,78 @@ def home_page():
         return json.dumps({'success': False, "message": str(e)}), 200, {'ContentType': 'application/json'}
 
 
+def describe_pressure(pressure):
+    """Convert pressure into barometer-type description."""
+    if pressure < 970:
+        description = "storm"
+    elif 970 <= pressure < 990:
+        description = "rain"
+    elif 990 <= pressure < 1010:
+        description = "change"
+    elif 1010 <= pressure < 1030:
+        description = "fair"
+    elif pressure >= 1030:
+        description = "dry"
+    else:
+        description = ""
+    return description
+
+
+def describe_temperature(temp):
+    """Convert relative humidity into good/bad description."""
+    if temp < 0:
+        description = "freezing"
+    elif 0 < temp < 10:
+        description = 'cold'
+    elif 10 < temp < 20:
+        description = 'cool'
+    elif 20 < temp < 25:
+        description = 'warm'
+    elif 25 < temp < 30:
+        description = 'hot'
+    elif temp > 30:
+        description = 'searing'
+    else:
+        description = None
+    return description
+
+
+def describe_humidity(humidity):
+    """Convert relative humidity into good/bad description."""
+    if 40 < humidity < 60:
+        description = "good"
+    elif humidity < 40:
+        description = "dry"
+    elif humidity > 60:
+        description = "wet"
+    return description
+
+
+def describe_type(type, value):
+    if type == 'pressure':
+        return describe_pressure(value)
+    elif type == 'humidity':
+        return describe_humidity(value)
+    elif type == 'temperature':
+        return describe_temperature(value)
+    else:
+        return None
+
+
 @app.route("/latest/", methods=['POST', 'GET'])
 def latest_data():
     res = mc.find().skip(mc.count_documents({}) - 1)
     data = dict()
+    descriptions = dict()
+    unit_list = dict()
     for i in types:
         data[i] = res[0][i]
-    return json.dumps({"data": data})
+        description = describe_type(i, data[i])
+        if description is not None:
+            descriptions[i] = description
+        unit_list[i] = units[i]
+
+    return json.dumps({"data": data, 'description': descriptions, 'units': unit_list})
 
 
 def get_periods(interval, period):
@@ -136,13 +219,13 @@ def analyse_trend(rtype, value_count=1000):
     # Calculate trend
     if r_squared > 0.5:
         if change_per_hour > 0.5:
-            trend = ">"
+            trend = "▲"
         elif change_per_hour < -0.5:
-            trend = "<"
+            trend = "▼"
         elif -0.5 <= change_per_hour <= 0.5:
-            trend = "-"
+            trend = "~"
 
-        if trend != "-":
+        if trend != "~":
             if abs(change_per_hour) > 3:
                 trend *= 2
     # print(change_per_hour, trend, r_squared)
@@ -263,7 +346,8 @@ def data_load():
             data.append(round(x['avg'], 2))
 
     title = titles[orig_type] if orig_type in titles else ""
-    return json.dumps({"data": data, "labels": labels, "title": title})
+    unit = units[orig_type] if orig_type in units else ""
+    return json.dumps({"data": data, "labels": labels, "title": title, 'unit': unit})
 
 
 @app.route('/all/<int:count>')

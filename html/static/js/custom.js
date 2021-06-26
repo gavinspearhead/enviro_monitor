@@ -1,17 +1,12 @@
+"use strict";
 
-var g_name= '';
-var g_type = '';
-var g_search = '';
-var max_datapoints = 120;
-
-//var colours = ['#e0b296', '#78cdc8', '#2e2e9e'];
 var colours = [ '#A2383B', '#c78200', '#2f6473'];
 
-function get_period(){
-
+function get_period()
+{
     var period = 'day';
     var interval = 60 * 20;
-    if ($("#day").is(":checked")) { console.log("aoeu'"); period = 'day'; interval = 60 * 30 ; } // hours
+    if ($("#day").is(":checked")) { period = 'day'; interval = 60 * 30 ; } // hours
     else if ($("#hour").is(":checked")) {period = 'hour'; interval = 60 } // minutes
     else if ($("#hour4").is(":checked")) {period = '4hour'; interval = 60 * 4 } // 4 minutes
     else if ($("#hour12").is(":checked")) {period = '12hour'; interval = 60 * 15 }
@@ -25,15 +20,14 @@ function get_period(){
     }
 
     return [period, interval];
-    }
+}
 
 function load_composite_graph(canvas_id, types, title)
 {
-    var x= get_period();
+    var x = get_period();
     var period = x[0];
     var interval = x[1];
-    console.log(x, period, interval);
-    res_data = [];
+    var res_data = [];
     var options= {
         graphTitleFontSize: 16,
         canvasBorders: true,
@@ -49,6 +43,7 @@ function load_composite_graph(canvas_id, types, title)
         legend: true,
         datasetFill : true,
         showXLabels: false,
+        yAxisUnitFontSize: 16,
     };
 
     var labels = null;
@@ -62,17 +57,19 @@ function load_composite_graph(canvas_id, types, title)
                 contentType: "application/json;charset=UTF-8",
         }).done(function(data) {
             var res = JSON.parse(data);
+            var interval_size = calculate_yaxis(res.data) ;
             if (res.labels.length > 0 && res.data.length > 0) {
                 res_data[i] = {
-                type: "line",
+                    type: "line",
                     fillColor: colours[i],
                     strokeColor: colours[i],
                     data: res.data,
                     title: types[i].replace(/_/g, " ")
-                }
+                };
+                options['yAxisUnit'] = res.unit;
+                options['yAxisMinimumInterval'] = interval_size;
             }
             console.log(res);
-            //labels = [];
             if (labels === null) {labels = res.labels;}
         });
     }
@@ -86,6 +83,21 @@ function load_composite_graph(canvas_id, types, title)
     return false;
 }
 
+function calculate_yaxis(data)
+{
+    var val = Math.abs(Math.max(...data) - Math.min(...data));
+    var interval_size = 0.01;
+    if (val > 0.1) { interval_size = .025;}
+    if (val > 1) { interval_size = .25;}
+    if (val > 10) { interval_size = 1;}
+    if (val > 100) { interval_size = 10;}
+    if (val > 1000) { interval_size = 100;}
+    if (val > 10000) { interval_size = 1000;}
+    if (val > 100000) { interval_size = 10000;}
+
+    return interval_size;
+}
+
 function load_graph(canvas_id, type)
 {
     var x= get_period();
@@ -94,12 +106,13 @@ function load_graph(canvas_id, type)
     $.ajax({
         url: script_root + '/data/',
         type: 'POST',
-        data:  JSON.stringify({'type': type,  'period': period, 'interval': interval}),
+        data:  JSON.stringify({'type': type, 'period': period, 'interval': interval}),
         cache: false,
         contentType: "application/json;charset=UTF-8",
     }).done(function(data) {
         var res = JSON.parse(data);
-        console.log(res.title);
+        var interval_size = calculate_yaxis(res.data) ;
+        console.log(interval_size);
         var options= {
             graphTitle: res.title,
             graphTitleFontSize: 16,
@@ -112,21 +125,20 @@ function load_graph(canvas_id, type)
             highLight: true,
             annotateLabel: "<%=v2+': '+v1+' '+v3%>",
             annotateDisplay: true,
+            yAxisMinimumInterval:interval_size,
             showXLabels: false,
-
+            yAxisUnit: res.unit,
+            yAxisUnitFontSize: 16,
         };
-        if (res.labels.length == 0 || res.data.length == 0) {
-        return
-        }
+        if (res.labels.length == 0 || res.data.length == 0) { return }
         var data = {
-        labels: res.labels,
-        datasets: [
-        {
-            fillColor: colours[0],
-            strokeColor: colours[0],
-            data: res.data,
-            title: type
-        }]
+            labels: res.labels,
+            datasets: [{
+                fillColor: colours[0],
+                strokeColor: colours[0],
+                data: res.data,
+                title: type
+            }]
         }
          new Chart(document.getElementById(canvas_id).getContext("2d")).StackedBar(data, options);
     });
@@ -148,7 +160,7 @@ function update_session()
         console.log("#setting_" + types[i]);
         if ($("#setting_" + types[i])[0].checked) {
             selected[types[i]] = 1;
-        } else  {
+        } else {
             selected[types[i]] = 0;
         }
     }
@@ -168,7 +180,6 @@ function load_all_graphs()
 {
     var types = simple_types;
     for (let i = 0; i < types.length; i++) {
-//        console.log($("#setting_pressure")[0].checked);
         if ($("#setting_" + types[i])[0].checked) {
             console.log(types[i]);
             $('#canvas_div_'+ types[i]).show();
@@ -189,14 +200,13 @@ function load_all_graphs()
         $("#canvas_noise").show();
             load_composite_graph('canvas_noise', composite_type, "Noise")
         } else {
-        $("#canvas_noise").hide();
+            $("#canvas_noise").hide();
     }
 }
 
 function round(nr, dig)
 {
-    exp = 10 ** dig;
-    return Math.round((nr+ Number.EPSILON) * exp)/exp;
+    var exp = 10 ** dig; return Math.round((nr+ Number.EPSILON) * exp)/exp;
 }
 
 
@@ -207,12 +217,19 @@ function load_currents()
         type: 'POST',
         cache: false,
         contentType: "application/json;charset=UTF-8",
-
     }).done(function(data) {
         var res = JSON.parse(data);
-        $("#current_temperature").text(round(res['data']['temperature'],1));
-        $("#current_humidity").text(round(res['data']['humidity'],1));
-        $("#current_pressure").text(round(res['data']['pressure'],0));
+        var temp_desc = res['description']['temperature']
+        var hum_desc = res['description']['humidity']
+        var press_desc = res['description']['pressure']
+//        console.log(img_path, hum_desc, temp_desc)
+        $("#current_temperature").text(round(res['data']['temperature'],1) + res['units']['temperature']);
+        $("#current_humidity").text(round(res['data']['humidity'],1) + res['units']['humidity']);
+        $("#current_pressure").text(round(res['data']['pressure'],0) + ' ' +res['units']['pressure']);
+//       console.log(img_path + "/humidity_" + hum_desc + '.png')
+        $("#humidity_icon").attr("src", img_path + "/humidity-" + hum_desc + '.png')
+        $("#temperature_icon").attr("src", img_path + "/temperature-" + temp_desc + '.png')
+        $("#pressure_icon").attr("src", img_path + "/pressure-" + press_desc + '.png')
     });
 }
 
@@ -223,17 +240,13 @@ function load_sun_times()
         type: 'POST',
         cache: false,
         contentType: "application/json;charset=UTF-8",
-
     }).done(function(data) {
         var res = JSON.parse(data);
         console.log(res);
         $("#next_sunrise").text(res.sun_up);
         $("#next_sunset").text(res.sun_down);
-
     });
-
 }
-
 
 
 function load_details(type)
@@ -249,7 +262,7 @@ var period = get_period()[0]
         type: 'POST',
         cache: false,
         async: false,
-        data:  JSON.stringify({'type': type,  'period': period, 'interval': 1}),
+        data:  JSON.stringify({'type': type, 'period': period, 'interval': 1}),
         contentType: "application/json;charset=UTF-8",
 
     }).done(function(data) {
@@ -262,15 +275,15 @@ var period = get_period()[0]
         ch = round(res.data.change_per_hour, 2);
         trend = res.data.trend;
     });
-        return "Avg: " + avg + "<br>Min: " + mn + "<br>Max: " + mx + "<br>Std Dev: " + std  + "<br>Change: " + ch + " " + trend;
+        return "Avg: " + avg + "<br>Min: " + mn + "<br>Max: " + mx + "<br>Std Dev: " + std  + "<br><br>Change: " + ch + " " + trend;
 }
 
 $( document ).ready(function() {
     var display = false;
+    var add_items_lock = 0
     $('.dropdown-toggle').dropdown()
-     $('[data-toggle="popover"]').popover();
+    $('[data-toggle="popover"]').popover();
 
-    add_items_lock = 0
     $('body').css('background-image', 'url("' + script_root + '/static/img/background.gif")');
     $('body').css('background-size', 'contain');
 
