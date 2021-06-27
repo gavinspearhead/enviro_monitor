@@ -260,6 +260,8 @@ var avg = 0;
 var mx = 0;
 var mn = 0;
 var std = 0
+var chg = '';
+var trend = null;
 var period = get_period()[0]
 
  $.ajax({
@@ -277,10 +279,10 @@ var period = get_period()[0]
         mn = round(res.data.min, 2);
         mx = round(res.data.max, 2);
         std = round(res.data.std, 2);
-        ch = round(res.data.change_per_hour, 2);
+        chg = round(res.data.change_per_hour, 2);
         trend = res.data.trend;
     });
-        return "Avg: " + avg + "<br>Min: " + mn + "<br>Max: " + mx + "<br>Std Dev: " + std  + "<br><br>Change: " + ch + " " + trend;
+        return "Avg: " + avg + "<br>Min: " + mn + "<br>Max: " + mx + "<br>Std Dev: " + std  + "<br><br>Change: " + chg + " " + trend;
 }
 
 $( document ).ready(function() {
