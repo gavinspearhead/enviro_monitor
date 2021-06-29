@@ -14,8 +14,8 @@ function get_period()
     else if ($("#month").is(":checked")) {period = 'month'; interval = 60 * 60 * 31 } // day
     else if ($("#custom").is(":checked")) {
         period = 'custom';
-        from = $("#from_date").val();
-        to = $("#to_date").val();
+        var from = $("#from_date").val();
+        var to = $("#to_date").val();
         return [period, [from, to] ]
     }
 
@@ -98,7 +98,7 @@ function calculate_yaxis(data)
     if (val < 1 )  {interval_size = round(interval_size, 2);}
     else if (val < 10 )  {interval_size = round(interval_size, 1);}
     else {interval_size = round(interval_size,0 );}
-    if (val < 0.01) { interval_size = val;}
+    if (val < 0.1) { interval_size = val;}
     console.log(val, interval_size)
     return interval_size;
 }
@@ -302,6 +302,9 @@ $( document ).ready(function() {
     });
     $("#custom").click(function() {  $('#timepicker').toggleClass('d-none');});
     $("#submit_custom").click(function() {
+        console.log($("#custom").prop("checked"));
+        $("#custom").prop("checked", true);
+        console.log($("#custom").prop("checked"));
         load_all_graphs();
     });
     load_all_graphs();
