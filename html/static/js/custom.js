@@ -95,11 +95,18 @@ function calculate_yaxis(data)
 //    if (val > 10000) { interval_size = 1000;}
 //    if (val > 100000) { interval_size = 10000;}
     var interval_size = val / 10;
-    if (val < 1 )  {interval_size = round(interval_size, 2);}
-    else if (val < 10 )  {interval_size = round(interval_size, 1);}
-    else {interval_size = round(interval_size,0 );}
-    if (val < 0.1) { interval_size = val;}
-    console.log(val, interval_size)
+    var lg = Math.floor(Math.log(interval_size) / Math.log(10) + 1);
+    console.log(lg, val, (Math.max(...data)- Math.min(...data))/10);
+    if (lg < 0) {
+        interval_size = round(interval_size, -lg +1 );
+    } else {
+        interval_size = round(interval_size, 1);
+    }
+//    if (val < 1 )  {interval_size = round(interval_size, 2);}
+//    else if (val < 10 )  {interval_size = round(interval_size, 1);}
+//    else {interval_size = round(interval_size,0 );}
+//    if (val < 0.1) { interval_size = val;}
+    console.log(val, interval_size);
     return interval_size;
 }
 
