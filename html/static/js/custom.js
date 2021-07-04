@@ -69,7 +69,7 @@ function load_composite_graph(canvas_id, types, title)
                 options['yAxisUnit'] = res.unit;
                 options['yAxisMinimumInterval'] = interval_size;
             }
-            console.log(res);
+//            console.log(res);
             if (labels === null) {labels = res.labels;}
         });
     }
@@ -78,7 +78,7 @@ function load_composite_graph(canvas_id, types, title)
         labels: labels,
         datasets: res_data
     };
-    console.log(data);
+//    console.log(data);
     new Chart(document.getElementById(canvas_id).getContext("2d")).StackedBar(data, options);
     return false;
 }
@@ -96,7 +96,7 @@ function calculate_yaxis(data)
 //    if (val > 100000) { interval_size = 10000;}
     var interval_size = val / 10;
     var lg = Math.floor(Math.log(interval_size) / Math.log(10) + 1);
-    console.log(lg, val, (Math.max(...data)- Math.min(...data))/10);
+//    console.log(lg, val, (Math.max(...data)- Math.min(...data))/10);
     if (lg < 0) {
         interval_size = round(interval_size, -lg +1 );
     } else {
@@ -106,7 +106,7 @@ function calculate_yaxis(data)
 //    else if (val < 10 )  {interval_size = round(interval_size, 1);}
 //    else {interval_size = round(interval_size,0 );}
 //    if (val < 0.1) { interval_size = val;}
-    console.log(val, interval_size);
+//    console.log(val, interval_size);
     return interval_size;
 }
 
@@ -124,7 +124,7 @@ function load_graph(canvas_id, type)
     }).done(function(data) {
         var res = JSON.parse(data);
         var interval_size = calculate_yaxis(res.data) ;
-        console.log(interval_size);
+//        console.log(interval_size);
         var options= {
             graphTitle: res.title,
             graphTitleFontSize: 16,
@@ -167,16 +167,16 @@ function update_session()
 {
     var types = all_types;
     var selected = {}
-    console.log(all_types);
+//    console.log(all_types);
     for (let i = 0; i < types.length; i++) {
-        console.log("#setting_" + types[i]);
+//        console.log("#setting_" + types[i]);
         if ($("#setting_" + types[i])[0].checked) {
             selected[types[i]] = 1;
         } else {
             selected[types[i]] = 0;
         }
     }
-    console.log(selected)
+//    console.log(selected)
     $.ajax({
         url: script_root + '/update_session/',
         type: 'POST',
@@ -193,7 +193,7 @@ function load_all_graphs()
     var types = simple_types;
     for (let i = 0; i < types.length; i++) {
         if ($("#setting_" + types[i])[0].checked) {
-            console.log(types[i]);
+//            console.log(types[i]);
             $('#canvas_div_'+ types[i]).show();
             load_graph('canvas_' + types[i], types[i]);
         } else {
@@ -234,7 +234,7 @@ function load_currents()
         var temp_desc = res['description']['temperature']
         var hum_desc = res['description']['humidity']
         var press_desc = res['description']['pressure']
-//        console.log(img_path, hum_desc, temp_desc)
+//        console.log(img_path, hum_desc, temp_desc, res)
         $("#current_temperature").text(round(res['data']['temperature'],1) + res['units']['temperature']);
         $("#current_humidity").text(round(res['data']['humidity'],1) + res['units']['humidity']);
         $("#current_pressure").text(round(res['data']['pressure'],0) + ' ' +res['units']['pressure']);
@@ -254,7 +254,7 @@ function load_sun_times()
         contentType: "application/json;charset=UTF-8",
     }).done(function(data) {
         var res = JSON.parse(data);
-        console.log(res);
+//        console.log(res);
         $("#next_sunrise").text(res.sun_up);
         $("#next_sunset").text(res.sun_down);
     });
@@ -281,7 +281,7 @@ var period = get_period()[0]
 
     }).done(function(data) {
         var res = JSON.parse(data);
-        console.log(res.data.avg);
+//        console.log(res.data.avg);
         avg = round(res.data.avg, 2);
         mn = round(res.data.min, 2);
         mx = round(res.data.max, 2);
@@ -309,9 +309,9 @@ $( document ).ready(function() {
     });
     $("#custom").click(function() {  $('#timepicker').toggleClass('d-none');});
     $("#submit_custom").click(function() {
-        console.log($("#custom").prop("checked"));
+//        console.log($("#custom").prop("checked"));
         $("#custom").prop("checked", true);
-        console.log($("#custom").prop("checked"));
+//        console.log($("#custom").prop("checked"));
         load_all_graphs();
     });
     load_all_graphs();

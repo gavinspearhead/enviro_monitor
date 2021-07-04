@@ -19,7 +19,6 @@
     src: url("{{ request.script_root }}/static/fonts/fontawesome-webfont.ttf") format("truetype");
 }
 
-
 </style>
 </head>
 
@@ -27,9 +26,7 @@
 <script type="text/javascript">
 </script>
 <nav class="navbar">
-<!--    <div class="container-fluid">-->
     <div class="navbar-left">
-
             <button class="btn btn-secondary dropdown-toggle" id="settings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" type="button">Settings</button>
             <div id="settings_list" class="dropdown-menu" aria-labelledby="settings">
             {% for t in types %}
@@ -39,8 +36,6 @@
                     </div>
             {% endfor %}
             </div>
-<!--            <button class="btn btn-secondary" name="shrink" id="shrink">-</button>-->
-<!--            <button class="btn btn-secondary" name="enlarge" id="enlarge">+</button>-->
 
             <input type="radio" class="btn-check" name="timeperiod" id="hour" autocomplete="off" checked>
             <label class="btn btn-secondary" for="hour">Hour</label>
@@ -86,64 +81,35 @@
 
 
     <div class="navbar-right">
-        <span class="badge" id="temperature_details">Temperature:</span>
+        <span class="badge" role="button" id="temperature_details">Temperature:</span>
         <span class="badge badge-primary" id="current_temperature"></span>
         <img width="28" height="28" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII" id="temperature_icon">
 
-        <span class="badge" id="humidity_details">Humidity:</span>
+        <span class="badge" role="button" id="humidity_details">Humidity:</span>
         <span class="badge badge-primary" id="current_humidity"></span>
         <img width="28" height="28" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII" id="humidity_icon">
 
-        <span class="badge" id="pressure_details">Pressure:</span>
+        <span class="badge" role="button" id="pressure_details">Pressure:</span>
         <span class="badge badge-primary" id="current_pressure"></span>
         <img width="28" height="28" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII" id="pressure_icon">
         <br>
-        <span class="badge" id="sunrise">Sunrise: </span> <span class="badge badge-primary" id="next_sunrise"></span>
-        <span class="badge" id="sunset">Sunset: </span> <span class="badge badge-primary" id="next_sunset"></span>
+        <span class="badge" id="sunrise">Sunrise:</span> <span class="badge badge-primary" id="next_sunrise"></span>
+        <span class="badge" id="sunset">Sunset:</span> <span class="badge badge-primary" id="next_sunset"></span>
     </div>
-
-<!--    </div>-->
 
 </nav>
 
-
 <div id="maindiv" class="container-fluid max-height scrollable">
-<!--  <br>-->
     <div class="row no-gutters">
-<!--            <h2 id="title"></h2>-->
-<!--            <div class="row no-gutters">-->
                 {% for x in keys %}
                 <div class="col-md-auto" id="canvas_div_{{x}}">
                 <canvas id="canvas_{{x}}" height="480" width="640"></canvas>
                 </div>
                 {% endfor %}
 
-<!--                <div class="col-md-auto">-->
-<!--                </div>-->
-<!--            </div>-->
-
 
         </div>
     </div>
-
-<!--<br>-->
-<!--<div id="alert_success_bar" class="hidden alert_bar alert_outer">-->
-<!--    <div class="alert alert-success alert-dismissable fade show" role="alert">-->
-<!--        <button type="button" class="close" data-dismiss="alert" aria-label="Close">-->
-<!--            <span aria-hidden="true">&times;</span>-->
-<!--        </button>-->
-<!--        <span id="alert_success_text"></span>-->
-<!--    </div>-->
-<!--</div>-->
-
-<!--<div id="alert_error_bar" class="hidden alert_bar alert_outer" >-->
-<!--    <div class="alert alert-danger alert-dismissable fade show" role="alert">-->
-<!--        <button type="button" class="close" data-dismiss="alert" aria-label="Close">-->
-<!--            <span aria-hidden="true">&times;</span>-->
-<!--        </button>-->
-<!--        <span id="alert_error_text"></span>-->
-<!--    </div>-->
-<!--</div>-->
 
 <script>
 var script_root = '{{ request.script_root }}';

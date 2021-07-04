@@ -1,20 +1,17 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import datetime
 import json
-import os
-import sys
 import traceback
-
 import numpy
 import tzlocal
 import dateutil.parser
-
 import pytz
 from astral.geocoder import lookup, database
 from astral.sun import sun
-
 from flask import Flask, render_template, request, session
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import config
 from mongo_connector import MongoConnector
@@ -27,7 +24,6 @@ app.secret_key = 'dummy stuff!'
  The reducing and NH3 resistance readings will drop with increasing concentrations of the gases that they detect,
  and the oxidising sensor will increase with increasing levels of nitrogen dioxide
 """
-
 
 types = ["temperature", 'humidity', 'pressure', 'oxidising', 'reducing', 'nh3', "lux", "proximity", "pm1", "pm25",
          "pm10", 'noise_low', 'noise_mid', 'noise_high']
@@ -68,9 +64,6 @@ units = {
     'noise': "",
     "particles": "μg/m3"
 }
-
-city = "Amsterdam"
-time_zone = "CET"
 
 
 @app.route('/update_session/', methods=['POST', 'GET'])
@@ -120,15 +113,15 @@ def describe_pressure(pressure):
 
 def describe_temperature(temp):
     """Convert relative humidity into good/bad description."""
-    if temp < 0:
+    if temp <= 0:
         description = "freezing"
-    elif 0 < temp < 10:
+    elif 0 < temp <= 10:
         description = 'cold'
-    elif 10 < temp < 20:
+    elif 10 < temp <= 20:
         description = 'cool'
-    elif 20 < temp < 25:
+    elif 20 < temp <= 25:
         description = 'warm'
-    elif 25 < temp < 30:
+    elif 25 < temp <= 30:
         description = 'hot'
     elif temp > 30:
         description = 'searing'
@@ -139,21 +132,22 @@ def describe_temperature(temp):
 
 def describe_humidity(humidity):
     """Convert relative humidity into good/bad description."""
+    description = ""
     if 40 < humidity < 60:
         description = "good"
-    elif humidity < 40:
+    elif humidity <= 40:
         description = "dry"
-    elif humidity > 60:
+    elif humidity >= 60:
         description = "wet"
     return description
 
 
-def describe_type(type, value):
-    if type == 'pressure':
+def describe_type(rtype, value):
+    if rtype == 'pressure':
         return describe_pressure(value)
-    elif type == 'humidity':
+    elif rtype == 'humidity':
         return describe_humidity(value)
-    elif type == 'temperature':
+    elif rtype == 'temperature':
         return describe_temperature(value)
     else:
         return None
@@ -161,7 +155,6 @@ def describe_type(type, value):
 
 @app.route("/latest/", methods=['POST', 'GET'])
 def latest_data():
-    # res = mc.find().skip(mc.count_documents({}) - 1)
     res = mc.find().limit(1).sort("$natural", -1)
     data = dict()
     descriptions = dict()
@@ -200,8 +193,10 @@ def get_periods(interval, period):
     return start_time, end_time, interval
 
 
-def analyse_trend(rtype, value_count=1000):
-    res = mc.find({}, {"_id": 0, rtype: 1, "timestamp": 1}).skip(mc.count_documents({}) - value_count)
+def analyse_trend(rtype):
+    start_time, end_time, dummy = get_periods(0, '12hour')
+    mask = {"$and": [{"timestamp": {"$gte": start_time}}, {"timestamp": {"$lte": end_time}}]}
+    res = mc.find(mask, {"_id": 0, rtype: 1, "timestamp": 1})
     data = []
     ts = []
     epoch = datetime.datetime.utcfromtimestamp(0)
@@ -209,7 +204,6 @@ def analyse_trend(rtype, value_count=1000):
     for x in res:
         data.append(x[rtype])
         ts.append((x['timestamp'] - epoch).total_seconds())
-    # print(data, ts)
     line = numpy.polyfit(ts, data, 1, full=True)
     slope = line[0][0]
     intercept = line[0][1]
@@ -256,14 +250,14 @@ def get_details():
             "max": {"$max": rtype},
             "min": {"$min": rtype},
             "avg": {"$avg": rtype},
-            "std": {"$stdDevPop": rtype},
+            "std": {"$stdDevPop": rtype}
         }
         }
     ]
-    # print(query)
     change_per_hour, trend = analyse_trend(orig_type)
+    # print(change_per_hour, trend, orig_type)
     res = mc.aggregate(query)
-    data = []
+    data = dict()
     for x in res:
         data = x
         break
@@ -302,7 +296,7 @@ def calculate_next_sun(cityname, time_zone_name="UTC"):
 
 @app.route("/sun/", methods=["POST", "GET"])
 def sun_info():
-    sun_down, sun_up = calculate_next_sun(city, time_zone)
+    sun_down, sun_up = calculate_next_sun(config['city'], config['time_zone'])
     return json.dumps({'sun_up': sun_up.strftime("%X"), "sun_down": sun_down.strftime("%X")})
 
 
@@ -318,23 +312,40 @@ def data_load():
 
     mask = {"$and": [{"timestamp": {"$gte": start_time}}, {"timestamp": {"$lte": end_time}}]}
     query = [
-        {"$match": {'$and': [mask]}},
-        {"$group": {
-            "_id": {
-                "$subtract": [
-                    {"$subtract": ["$timestamp", start_time]},
-                    {"$mod": [
-                        {"$subtract": ["$timestamp", start_time]},
-                        1000 * interval
-                    ]}
-                ]
-            },
-            'time': {'$min': "$timestamp"},
-            'time2': {'$max': "$timestamp"},
-            "avg": {"$avg": rtype}
-        }
+        {
+            "$match": {
+                '$and': [mask]
+            }
         },
-        {"$sort": {"_id": 1}}
+        {
+            "$group": {
+                "_id": {
+                    "$subtract": [
+                        {
+                            "$subtract": [
+                                "$timestamp", start_time
+                            ]
+                        },
+                        {
+                            "$mod": [
+                                {
+                                    "$subtract": [
+                                        "$timestamp", start_time
+                                    ]
+                                },
+                                1000 * interval
+                            ]
+                        }
+                    ]
+                },
+                'time': {'$min': "$timestamp"},
+                'time2': {'$max': "$timestamp"},
+                "avg": {"$avg": rtype}
+            }
+        },
+        {
+            "$sort": {"_id": 1}
+        }
     ]
 
     res = mc.aggregate(query)
@@ -344,9 +355,9 @@ def data_load():
     t_format = "%H:%M"
     if interval > 3600:
         t_format = "%Y-%m-%d %H:%M"
-
+    local_tz = tzlocal.get_localzone()
     for x in res:
-        t = x['time'].replace(tzinfo=pytz.UTC).astimezone(tzlocal.get_localzone())
+        t = x['time'].replace(tzinfo=pytz.UTC).astimezone(local_tz)
         ts = t.strftime(t_format)
         if x['avg'] is not None:
             labels.append(ts)
