@@ -18,14 +18,13 @@
     font-family: "My Custom Font";
     src: url("{{ request.script_root }}/static/fonts/fontawesome-webfont.ttf") format("truetype");
 }
-
 </style>
 </head>
 
 <body class="text-white bg-dark">
 <script type="text/javascript">
 </script>
-<nav class="navbar">
+<nav class="navbar" id="navbar">
     <div class="navbar-left">
             <button class="btn btn-secondary dropdown-toggle" id="settings" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" type="button">Settings</button>
             <div id="settings_list" class="dropdown-menu" aria-labelledby="settings">
@@ -59,7 +58,7 @@
             <label class="btn btn-secondary" for="custom">Custom</label>
 
             <div id="custom_timepicker" class="dropdown-menu" aria-labelledby="custom">
-<div class="container">
+<div class="container" i="maindiv">
     <div class="row ">
         <div class="col align-self-end">
             <div class="d-none align-self-end" id="timepicker">
@@ -101,16 +100,14 @@
 
 <div id="maindiv" class="container-fluid max-height scrollable">
     <div class="row no-gutters">
-                {% for x in keys %}
-                <div class="col-md-auto" id="canvas_div_{{x}}">
+        {% for x in keys %}
+            <div class="col-md-auto" id="canvas_div_{{x}}">
                 <canvas id="canvas_{{x}}" height="480" width="640"></canvas>
-                </div>
-                {% endfor %}
-
-
-        </div>
+            </div>
+        {% endfor %}
     </div>
-
+</div>
+<div><br>&nbsp;<br></div>
 <script>
 var script_root = '{{ request.script_root }}';
 var img_path = "{{ url_for('static', filename='img/') }}";

@@ -33,8 +33,9 @@ html,body {
 }
 
 .max-height {
-    height: 100%;
-    padding-bottom: 55px;
+    _height: 100%;
+    padding-bottom: 255px;
+    margin-bottom: 250px;
 }
 
 .no-overflow {
