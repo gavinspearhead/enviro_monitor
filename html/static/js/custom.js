@@ -296,11 +296,12 @@ function calculate_height()
 {
     var nb_height = $("#navbar").height();
     var b_height = $("body").height();
+    var m_height = $("#maindiv").height();
     var w_height = window.innerHeight;
     var res_height = Math.floor(w_height-nb_height) - 18;
-    console.log(w_height, nb_height, res_height, b_height);
+    console.log(w_height, nb_height, res_height, b_height, m_height);
     $('#maindiv').height(res_height);
-    }
+}
 
 $( document ).ready(function() {
     var display = false;
@@ -323,7 +324,6 @@ $( document ).ready(function() {
 //        console.log($("#custom").prop("checked"));
         load_all_graphs();
     });
-    calculate_height();
     load_all_graphs();
     load_currents();
 
@@ -346,5 +346,6 @@ $( document ).ready(function() {
     load_sun_times();
     setInterval(load_currents, 5000);
     setInterval(load_sun_times, 1000 * 60 * 60);
+    calculate_height();
 });
 
