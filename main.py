@@ -617,7 +617,7 @@ if __name__ == '__main__':
         ec = EnviroCollector(timeout * 2)
         display = Display(city_name, time_zone, path)
 
-        x = threading.Thread(target=create_summary(), args=(2,), daemon=True)
+        x = threading.Thread(target=create_summary, args=(2,), daemon=True)
         x.start()
 
         enable_display = False
