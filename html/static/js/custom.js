@@ -51,7 +51,7 @@ function load_composite_graph(canvas_id, types, title)
         $.ajax({
                 url: script_root + '/data/',
                 type: 'POST',
-                data:  JSON.stringify({'type': types[i], 'period': period, 'interval': interval}),
+                data: JSON.stringify({'type': types[i], 'period': period, 'interval': interval}),
                 cache: false,
                 async: false,
                 contentType: "application/json;charset=UTF-8",

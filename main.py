@@ -3,12 +3,13 @@ import logging
 import argparse
 import subprocess
 import os
+import threading
 import time
 import numpy
 import colorsys
 import datetime
 import pytz
-import pymongo, pymongo.errors
+import pymongo.errors
 import ST7735
 
 from enviroplus.noise import Noise
@@ -19,11 +20,11 @@ from pms5003 import PMS5003, ReadTimeoutError as pmsReadTimeoutError, ChecksumMi
 from fonts.ttf import RobotoMedium as UserFont
 from astral.geocoder import database, lookup
 from astral.sun import sun
-from concurrent.futures import ThreadPoolExecutor
 
 from fifo import fifo
 from mongo_connector import MongoConnector
 from config import config
+from summarise import summarise_data
 
 try:
     from smbus2 import SMBus
@@ -38,8 +39,6 @@ try:
 except ImportError:
     import ltr559
 
-
-
 logging.basicConfig(
     format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s',
     level=logging.INFO,
@@ -53,6 +52,12 @@ Press Ctrl+C to exit!
 
 DEBUG = os.getenv('DEBUG', 'false') == 'true'
 path = os.path.dirname(os.path.realpath(__file__))
+
+
+def create_summary(months_retained=2):
+    while True:
+        summarise_data(months_retained)
+        time.sleep(24 * 60 * 60)  # 1day
 
 
 def str_to_bool(value):
@@ -611,6 +616,9 @@ if __name__ == '__main__':
         mc = MongoConnector(config).get_collection()
         ec = EnviroCollector(timeout * 2)
         display = Display(city_name, time_zone, path)
+
+        x = threading.Thread(target=create_summary(), args=(2,), daemon=True)
+        x.start()
 
         enable_display = False
         display.disable(True)

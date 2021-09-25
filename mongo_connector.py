@@ -14,6 +14,13 @@ class MongoConnector:
             self._mongo = MongoClient(host=hostname, port=port)
         self._db = self._mongo[self._config['database']]
         self._collection = self._db[self._config['collection']]
+        self._hourly_collection = self._db[self._config['aggregate_collection']]
+
+    def get_aggregate_collection(self):
+        return self._hourly_collection
 
     def get_collection(self):
         return self._collection
+
+    def get_db(self):
+        return self._db
