@@ -44,6 +44,9 @@ function load_composite_graph(canvas_id, types, title)
         datasetFill : true,
         showXLabels: false,
         yAxisUnitFontSize: 16,
+        forceScale:"steps",
+        scaleSteps : 10,
+        fmtYLabel: "number",
     };
 
     var labels = null;
@@ -64,8 +67,8 @@ function load_composite_graph(canvas_id, types, title)
                     fillColor: colours[i],
                     strokeColor: colours[i],
                     data: res.data,
-                    title: types[i].replace(/_/g, " ")
-                };
+                    title: types[i].replace(/_/g, " "),
+                    };
                 options['yAxisUnit'] = res.unit;
                 options['yAxisMinimumInterval'] = interval_size;
             }
@@ -110,6 +113,26 @@ function calculate_yaxis(data)
     return interval_size;
 }
 
+
+function fmtChartJSPerso(n, p, fmt)
+{
+//    console.log(n,p,fmt);
+    if (fmt == 'number') {
+        var interval_size = n.yAxisMinimumInterval/ 10;
+        var lg = Math.floor(Math.log(interval_size) / Math.log(10) + 1);
+        if (lg < 0) {
+            p = round(p, -lg + 1 );
+        } else if (lg <= 3)
+            p = round(p, 2);
+        else {
+            p = round(interval_size, 1);
+        }
+        return p;
+    }
+    return p;
+}
+
+
 function load_graph(canvas_id, type)
 {
     var x= get_period();
@@ -123,7 +146,7 @@ function load_graph(canvas_id, type)
         contentType: "application/json;charset=UTF-8",
     }).done(function(data) {
         var res = JSON.parse(data);
-        var interval_size = calculate_yaxis(res.data) ;
+        var interval_size = calculate_yaxis(res.data);
 //        console.log(interval_size);
         var options= {
             graphTitle: res.title,
@@ -141,6 +164,10 @@ function load_graph(canvas_id, type)
             showXLabels: false,
             yAxisUnit: res.unit,
             yAxisUnitFontSize: 16,
+            forceScale:"steps",
+            scaleSteps : 10,
+            scaleStepWidth : 1,
+            fmtYLabel: "number",
         };
         if (res.labels.length == 0 || res.data.length == 0) { return }
         var data = {
@@ -149,10 +176,12 @@ function load_graph(canvas_id, type)
                 fillColor: colours[0],
                 strokeColor: colours[0],
                 data: res.data,
-                title: type
+                title: type,
+                drawMathLine: "mean",
+                mathLineStrokeColor: "#f88",
             }]
         }
-         new Chart(document.getElementById(canvas_id).getContext("2d")).StackedBar(data, options);
+         new Chart(document.getElementById(canvas_id).getContext("2d")).Bar(data, options);
     });
     return false;
 }
@@ -299,7 +328,7 @@ function calculate_height()
     var m_height = $("#maindiv").height();
     var w_height = window.innerHeight;
     var res_height = Math.floor(w_height-nb_height) - 18;
-    console.log(w_height, nb_height, res_height, b_height, m_height);
+//    console.log(w_height, nb_height, res_height, b_height, m_height);
     $('#maindiv').height(res_height);
 }
 
