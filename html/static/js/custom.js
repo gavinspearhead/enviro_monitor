@@ -178,7 +178,7 @@ function load_graph(canvas_id, type)
                 data: res.data,
                 title: type,
                 drawMathLine: "mean",
-                mathLineStrokeColor: "#f88",
+                mathLineStrokeColor: "#fb0",
             }]
         }
          new Chart(document.getElementById(canvas_id).getContext("2d")).Bar(data, options);
